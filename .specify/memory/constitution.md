@@ -1,50 +1,64 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: [CONSTITUTION_VERSION] → 1.0.0
+- New constitution created with 6 core principles for MedMatch AI
+- Added sections: Privacy & Compliance, Performance Standards, Architecture & Development
+- Templates requiring updates: ✅ updated
+- Follow-up TODOs: None
+-->
+
+# MedMatch AI Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Patient Privacy & HIPAA Compliance (NON-NEGOTIABLE)
+All data handling, processing, and storage MUST comply with HIPAA regulations and healthcare privacy standards. Patient data privacy is paramount and supersedes all other considerations. No patient data may be logged, cached, or transmitted without proper encryption and authorization. All AI models must operate on de-identified data only, with explicit audit trails for any data access.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+**Rationale**: Healthcare applications handle sensitive personal information that requires the highest level of protection under legal and ethical frameworks.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Open-Source Development & Reproducibility
+All core components must be open-source with transparent development practices. Results must be reproducible across different environments and deployments. Version control, dependency management, and build processes must ensure consistent outcomes. All AI models, training data (where permissible), and evaluation metrics must be documented and accessible.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: Open-source development ensures transparency, community contribution, security through peer review, and builds trust in healthcare AI systems.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Real-Time Performance Requirements
+System must maintain sub-50ms inference latency where technically feasible. Performance monitoring and optimization are mandatory for all AI inference endpoints. Degraded performance must trigger automatic alerts and fallback mechanisms. Batch processing acceptable only for non-critical operations.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Medical decision support requires rapid response times to be effective in clinical workflows and emergency situations.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Modular Architecture & LLM Provider Flexibility
+Architecture must support multiple LLM providers through standardized interfaces. No vendor lock-in permitted - switching between providers must be configuration-driven. All AI components must be modular, independently deployable, and testable. Provider-specific optimizations allowed but must not break interface contracts.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: Healthcare systems require flexibility to adapt to evolving AI technologies and avoid dependency on single vendors for critical operations.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Transparent AI Decision-Making
+All AI decisions must be explainable with clear reasoning paths. Model outputs must include confidence scores and uncertainty quantification. Decision logic must be auditable and traceable. Black-box AI decisions are prohibited for clinical recommendations - interpretability is mandatory.
+
+**Rationale**: Healthcare professionals need to understand AI reasoning to make informed decisions and maintain clinical responsibility.
+
+### VI. Scalable Deployment Architecture
+System must scale from local development environments to production deployments. Infrastructure-as-code and containerization are mandatory. Auto-scaling, load balancing, and disaster recovery must be built-in. Development-production parity must be maintained through consistent deployment pipelines.
+
+**Rationale**: Healthcare systems require reliable scaling to serve varying patient loads while maintaining consistent performance and availability.
+
+## Privacy & Compliance Standards
+
+All implementations must undergo privacy impact assessments before deployment. Data encryption at rest and in transit is mandatory. Access controls must follow principle of least privilege. Regular security audits and penetration testing required. Compliance documentation must be maintained and updated with system changes.
+
+## Performance Standards
+
+- Inference latency: <50ms target, <100ms maximum
+- System availability: 99.9% uptime minimum
+- Model accuracy: Baseline metrics must be maintained or improved
+- Resource utilization: Efficient use of computational resources
+- Monitoring: Real-time performance dashboards required
+
+## Architecture & Development Workflow
+
+Test-driven development mandatory for all components. Code reviews required for all changes with security and privacy focus. Continuous integration/deployment with automated testing gates. Documentation must be updated with all changes. Version control with semantic versioning for all components.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices and technical decisions. Amendments require documented justification, stakeholder approval, and migration plan. All code reviews and architecture decisions must verify compliance with these principles. Violations must be addressed immediately with root cause analysis.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-09-29 | **Last Amended**: 2025-09-29
