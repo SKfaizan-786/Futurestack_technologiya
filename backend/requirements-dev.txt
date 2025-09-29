@@ -1,0 +1,19 @@
+# Include production requirements
+-r requirements.txt
+
+# Additional development tools
+mypy==1.7.1
+bandit==1.7.5
+safety==2.3.5
+jupyter==1.0.0
+ipython==8.18.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+
+# Load testing
+locust==2.17.0
+
+# Database tools
+pgcli==4.0.0

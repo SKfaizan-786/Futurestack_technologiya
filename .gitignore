@@ -106,7 +106,6 @@ data/real/
 !**/mock_data.json
 
 # Model files (too large for git)
-models/
 *.pkl
 *.joblib
 *.h5
