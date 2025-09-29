@@ -1,0 +1,799 @@
+openapi: 3.0.3
+info:
+  title: MedMatch AI - Clinical Trial Matching API
+  description: AI-powered clinical trial matching platform for cancer patients
+  version: 1.0.0
+  contact:
+    name: MedMatch AI Team
+    email: support@medmatch-ai.org
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.medmatch-ai.org
+    description: Production server
+
+paths:
+  /api/v1/match:
+    post:
+      summary: Find matching clinical trials for a patient
+      description: Analyze patient medical data and return top 3 matching clinical trials with explanations
+      operationId: matchTrials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+            examples:
+              structured_data:
+                summary: Structured patient data
+                value:
+                  patient_data:
+                    data_type: "structured"
+                    medical_data:
+                      diagnosis: "C78.00"
+                      stage: "Stage IIIA"
+                      age: 52
+                      gender: "female"
+                      location: "90210"
+                      biomarkers:
+                        - name: "EGFR"
+                          value: "mutation_positive"
+                          test_date: "2025-08-15"
+                      treatment_history:
+                        - treatment_type: "chemotherapy"
+                          drug_name: "carboplatin"
+                          start_date: "2025-07-01"
+                          end_date: "2025-08-30"
+                          response: "partial_response"
+                  preferences:
+                    max_distance_miles: 50
+                    include_phase_1: false
+              unstructured_data:
+                summary: Natural language patient data
+                value:
+                  patient_data:
+                    data_type: "unstructured"
+                    text: "52-year-old female with stage IIIA lung adenocarcinoma, EGFR mutation positive, completed first-line carboplatin/pemetrexed with partial response. Located in Beverly Hills, CA."
+                  preferences:
+                    max_distance_miles: 25
+                    include_phase_1: true
+      responses:
+        '200':
+          description: Successful trial matching
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/trials/{trial_id}:
+    get:
+      summary: Get detailed information about a specific trial
+      description: Retrieve comprehensive details about a clinical trial
+      operationId: getTrialDetails
+      parameters:
+        - name: trial_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique trial identifier
+      responses:
+        '200':
+          description: Trial details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrialDetails'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/trials/search:
+    get:
+      summary: Search clinical trials by criteria
+      description: Search available clinical trials using various filters
+      operationId: searchTrials
+      parameters:
+        - name: condition
+          in: query
+          schema:
+            type: string
+          description: Cancer type or condition
+        - name: phase
+          in: query
+          schema:
+            type: string
+            enum: ["Phase I", "Phase II", "Phase III", "Phase IV"]
+          description: Trial phase
+        - name: location
+          in: query
+          schema:
+            type: string
+          description: Geographic location (city, state, or ZIP code)
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: ["recruiting", "active", "completed", "suspended"]
+          description: Trial recruitment status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of results to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of results to skip for pagination
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrialSearchResponse'
+
+  /api/v1/notifications/subscribe:
+    post:
+      summary: Subscribe to trial notifications
+      description: Subscribe a patient to receive notifications when new relevant trials become available
+      operationId: subscribeNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationSubscription'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Invalid subscription data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/health:
+    get:
+      summary: Health check endpoint
+      description: Check API health and system status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    MatchRequest:
+      type: object
+      required:
+        - patient_data
+      properties:
+        patient_data:
+          $ref: '#/components/schemas/PatientData'
+        preferences:
+          $ref: '#/components/schemas/MatchPreferences'
+    
+    PatientData:
+      type: object
+      required:
+        - data_type
+      properties:
+        data_type:
+          type: string
+          enum: ["structured", "unstructured"]
+          description: Type of patient data provided
+        medical_data:
+          $ref: '#/components/schemas/StructuredMedicalData'
+        text:
+          type: string
+          description: Natural language description of patient condition (required if data_type is unstructured)
+          minLength: 50
+          maxLength: 5000
+    
+    StructuredMedicalData:
+      type: object
+      required:
+        - diagnosis
+        - age
+        - gender
+      properties:
+        diagnosis:
+          type: string
+          description: Primary cancer diagnosis (ICD-10 code preferred)
+          example: "C78.00"
+        stage:
+          type: string
+          description: Cancer stage
+          example: "Stage IIIA"
+        age:
+          type: integer
+          minimum: 18
+          maximum: 120
+          description: Patient age in years
+        gender:
+          type: string
+          enum: ["male", "female", "other"]
+          description: Patient gender
+        location:
+          type: string
+          description: Patient location (ZIP code preferred)
+          example: "90210"
+        biomarkers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Biomarker'
+        treatment_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/Treatment'
+    
+    Biomarker:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: Biomarker name
+          example: "EGFR"
+        value:
+          type: string
+          description: Test result value
+          example: "mutation_positive"
+        test_date:
+          type: string
+          format: date
+          description: Date when test was performed
+    
+    Treatment:
+      type: object
+      required:
+        - treatment_type
+        - drug_name
+        - start_date
+      properties:
+        treatment_type:
+          type: string
+          description: Type of treatment
+          example: "chemotherapy"
+        drug_name:
+          type: string
+          description: Specific medication or therapy
+          example: "carboplatin"
+        start_date:
+          type: string
+          format: date
+          description: Treatment start date
+        end_date:
+          type: string
+          format: date
+          description: Treatment end date (if completed)
+        response:
+          type: string
+          enum: ["complete_response", "partial_response", "stable_disease", "progressive_disease"]
+          description: Treatment response
+    
+    MatchPreferences:
+      type: object
+      properties:
+        max_distance_miles:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum distance from patient location
+        include_phase_1:
+          type: boolean
+          default: false
+          description: Whether to include Phase I trials
+        preferred_locations:
+          type: array
+          items:
+            type: string
+          description: Preferred trial locations
+    
+    MatchResponse:
+      type: object
+      required:
+        - request_id
+        - matches
+        - processing_time_ms
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this matching request
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrialMatch'
+          maxItems: 3
+          description: Top 3 matching trials
+        processing_time_ms:
+          type: integer
+          description: Request processing time in milliseconds
+        patient_summary:
+          type: string
+          description: AI-generated summary of patient profile
+    
+    TrialMatch:
+      type: object
+      required:
+        - trial_id
+        - nct_id
+        - title
+        - confidence_score
+        - recommendation
+        - explanation
+      properties:
+        trial_id:
+          type: string
+          format: uuid
+          description: Internal trial identifier
+        nct_id:
+          type: string
+          pattern: "^NCT\\d{8}$"
+          description: ClinicalTrials.gov NCT identifier
+          example: "NCT04567890"
+        title:
+          type: string
+          description: Official trial title
+        brief_summary:
+          type: string
+          description: Brief study description
+        confidence_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Match confidence (0.0 = no match, 1.0 = perfect match)
+        recommendation:
+          type: string
+          enum: ["eligible", "likely_eligible", "unlikely_eligible", "ineligible"]
+          description: AI recommendation for eligibility
+        explanation:
+          type: string
+          description: Human-readable explanation of why this trial was recommended
+        reasoning_chain:
+          $ref: '#/components/schemas/ReasoningChain'
+        proximity_info:
+          $ref: '#/components/schemas/ProximityInfo'
+        contact_info:
+          $ref: '#/components/schemas/ContactInfo'
+    
+    ReasoningChain:
+      type: object
+      properties:
+        inclusion_analysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaAnalysis'
+        exclusion_analysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaAnalysis'
+        biomarker_analysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaAnalysis'
+        overall_reasoning:
+          type: string
+          description: Summary of AI reasoning process
+    
+    CriteriaAnalysis:
+      type: object
+      required:
+        - criteria_text
+        - match_status
+        - confidence
+        - reasoning
+      properties:
+        criteria_text:
+          type: string
+          description: Original eligibility criteria text
+        patient_data_match:
+          type: string
+          description: Relevant patient data that was evaluated
+        match_status:
+          type: string
+          enum: ["met", "not_met", "uncertain", "not_applicable"]
+          description: Whether patient meets this criteria
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence in this specific match
+        reasoning:
+          type: string
+          description: AI explanation for this criteria evaluation
+    
+    ProximityInfo:
+      type: object
+      properties:
+        nearest_location:
+          $ref: '#/components/schemas/TrialLocation'
+        distance_miles:
+          type: number
+          description: Distance to nearest trial location
+        all_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrialLocation'
+    
+    TrialLocation:
+      type: object
+      properties:
+        facility:
+          type: string
+          description: Hospital or clinic name
+        city:
+          type: string
+          description: City name
+        state:
+          type: string
+          description: State abbreviation
+        zip_code:
+          type: string
+          description: ZIP code
+        status:
+          type: string
+          enum: ["recruiting", "active", "completed", "suspended"]
+          description: Site recruitment status
+    
+    ContactInfo:
+      type: object
+      properties:
+        primary_contact:
+          $ref: '#/components/schemas/Contact'
+        backup_contact:
+          $ref: '#/components/schemas/Contact'
+        study_website:
+          type: string
+          format: uri
+          description: Study information website
+    
+    Contact:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Contact person name
+        phone:
+          type: string
+          description: Phone number
+        email:
+          type: string
+          format: email
+          description: Email address
+    
+    TrialDetails:
+      type: object
+      required:
+        - trial_id
+        - nct_id
+        - title
+        - phase
+        - overall_status
+      properties:
+        trial_id:
+          type: string
+          format: uuid
+        nct_id:
+          type: string
+          pattern: "^NCT\\d{8}$"
+        title:
+          type: string
+        brief_summary:
+          type: string
+        detailed_description:
+          type: string
+        phase:
+          type: string
+          enum: ["Phase I", "Phase II", "Phase III", "Phase IV"]
+        study_type:
+          type: string
+          enum: ["interventional", "observational"]
+        overall_status:
+          type: string
+          enum: ["recruiting", "active", "completed", "suspended", "terminated"]
+        condition:
+          type: string
+        intervention:
+          type: array
+          items:
+            type: string
+        eligibility_criteria:
+          type: object
+          properties:
+            inclusion_criteria:
+              type: array
+              items:
+                type: string
+            exclusion_criteria:
+              type: array
+              items:
+                type: string
+            age_range:
+              type: object
+              properties:
+                min_age:
+                  type: integer
+                max_age:
+                  type: integer
+            gender:
+              type: string
+              enum: ["all", "male", "female"]
+        enrollment_count:
+          type: integer
+        sponsor:
+          type: string
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrialLocation'
+        last_updated:
+          type: string
+          format: date-time
+    
+    TrialSearchResponse:
+      type: object
+      required:
+        - trials
+        - total_count
+        - offset
+        - limit
+      properties:
+        trials:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrialSummary'
+        total_count:
+          type: integer
+          description: Total number of trials matching search criteria
+        offset:
+          type: integer
+          description: Number of results skipped
+        limit:
+          type: integer
+          description: Maximum number of results returned
+        search_time_ms:
+          type: integer
+          description: Search processing time in milliseconds
+    
+    TrialSummary:
+      type: object
+      required:
+        - trial_id
+        - nct_id
+        - title
+        - phase
+        - overall_status
+      properties:
+        trial_id:
+          type: string
+          format: uuid
+        nct_id:
+          type: string
+        title:
+          type: string
+        brief_summary:
+          type: string
+        phase:
+          type: string
+        overall_status:
+          type: string
+        condition:
+          type: string
+        sponsor:
+          type: string
+        location_count:
+          type: integer
+          description: Number of trial locations
+        last_updated:
+          type: string
+          format: date-time
+    
+    NotificationSubscription:
+      type: object
+      required:
+        - email
+        - medical_criteria
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address for notifications
+        medical_criteria:
+          $ref: '#/components/schemas/StructuredMedicalData'
+        notification_preferences:
+          type: object
+          properties:
+            frequency:
+              type: string
+              enum: ["immediate", "daily", "weekly"]
+              default: "weekly"
+            max_distance_miles:
+              type: integer
+              minimum: 1
+              maximum: 500
+              default: 50
+    
+    SubscriptionResponse:
+      type: object
+      required:
+        - subscription_id
+        - status
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+          description: Unique subscription identifier
+        status:
+          type: string
+          enum: ["active", "pending_confirmation"]
+          description: Subscription status
+        confirmation_email_sent:
+          type: boolean
+          description: Whether confirmation email was sent
+    
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+          description: Overall system health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        services:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/ServiceHealth'
+            llm_api:
+              $ref: '#/components/schemas/ServiceHealth'
+            trials_api:
+              $ref: '#/components/schemas/ServiceHealth'
+        performance_metrics:
+          type: object
+          properties:
+            avg_response_time_ms:
+              type: number
+              description: Average API response time
+            requests_per_minute:
+              type: integer
+              description: Current request rate
+            error_rate_percent:
+              type: number
+              description: Error rate percentage
+    
+    ServiceHealth:
+      type: object
+      required:
+        - status
+        - response_time_ms
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        response_time_ms:
+          type: number
+          description: Service response time
+        last_check:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+          description: Error message if service is unhealthy
+    
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error type or code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+          description: Request identifier for debugging
+        details:
+          type: object
+          description: Additional error details
+    
+    ValidationErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - validation_errors
+      properties:
+        error:
+          type: string
+          enum: ["validation_error"]
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field that failed validation
+              message:
+                type: string
+                description: Validation error message
+              code:
+                type: string
+                description: Validation error code
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
