@@ -16,28 +16,12 @@ import uvicorn
 
 from ..utils.config import settings
 from .health import router as health_router
-from .middleware import create_error_handler_middleware
+from .middleware import ErrorHandlingMiddleware
 from ..models.base import init_database, db_manager
 from ..utils.logging import configure_logging
 
 # Initialize structured logging
 configure_logging()
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer() if settings.log_format == "json" else structlog.dev.ConsoleRenderer(),
-    ],
-    wrapper_class=structlog.stdlib.BoundLogger,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
 
 logger = structlog.get_logger(__name__)
 
@@ -145,7 +129,7 @@ def create_app() -> FastAPI:
         )
     
     # Add error handling middleware
-    app.add_middleware(create_error_handler_middleware())
+    app.add_middleware(ErrorHandlingMiddleware)
     
     # Request/Response middleware for logging and monitoring
     @app.middleware("http")

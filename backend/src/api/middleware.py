@@ -382,11 +382,11 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def create_error_handler_middleware() -> ErrorHandlingMiddleware:
+def create_error_handler_middleware():
     """
     Create error handling middleware instance.
     
     Returns:
-        Configured error handling middleware
+        Configured error handling middleware class
     """
-    return ErrorHandlingMiddleware()
+    return ErrorHandlingMiddleware
