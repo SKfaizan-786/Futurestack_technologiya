@@ -13,6 +13,9 @@ import re
 import json
 import hashlib
 
+# Import our Medical NLP Processor
+from ..services.medical_nlp import MedicalNLPProcessor
+
 Base = declarative_base()
 
 
@@ -297,81 +300,40 @@ class EligibilityCriteria(BaseModel):
     
     def extract_medical_entities(self) -> Dict[str, List[str]]:
         """
-        Extract medical entities from criteria text.
+        Extract medical entities from criteria text using advanced NLP.
         
-        Uses pattern matching and medical dictionaries to identify
-        conditions, medications, procedures, and other medical concepts.
+        Uses the Medical NLP Processor service for sophisticated entity extraction
+        including conditions, medications, procedures, and other medical concepts.
         """
-        entities = {
-            "conditions": [],
-            "excluded_conditions": [],
-            "medications": [],
-            "procedures": [],
-            "lab_values": [],
-            "demographics": []
-        }
+        # Initialize NLP processor
+        nlp_processor = MedicalNLPProcessor()
         
-        text = self.raw_text.lower()
-        inclusion_text = " ".join(self.inclusion_criteria).lower()
-        exclusion_text = " ".join(self.exclusion_criteria).lower()
-        full_text = f"{text} {inclusion_text} {exclusion_text}".lower()
+        # Combine all text for processing
+        text = self.raw_text
+        inclusion_text = " ".join(self.inclusion_criteria)
+        exclusion_text = " ".join(self.exclusion_criteria)
+        full_text = f"{text} {inclusion_text} {exclusion_text}"
         
-        # Medical condition patterns
-        condition_patterns = [
-            r'\b(?:diabetes|hypertension|cancer|asthma|copd|heart disease|kidney disease)\b',
-            r'\b(?:type [12] diabetes|diabetes mellitus)\b',
-            r'\b(?:myocardial infarction|stroke|cardiovascular disease)\b',
-            r'\b(?:depression|anxiety|psychiatric)\b'
-        ]
+        # Use advanced NLP extraction
+        entities = nlp_processor.extract_medical_entities(full_text, include_context=True)
         
-        # Extract conditions from inclusion criteria (included conditions)
-        for pattern in condition_patterns:
-            matches = re.findall(pattern, f"{text} {inclusion_text}")
-            entities["conditions"].extend(matches)
-        
-        # Extract conditions from exclusion criteria (excluded conditions)
-        for pattern in condition_patterns:
-            matches = re.findall(pattern, exclusion_text)
-            entities["excluded_conditions"].extend(matches)
-        
-        # Medication patterns
-        medication_patterns = [
-            r'\b(?:metformin|insulin|lisinopril|atorvastatin|aspirin)\b',
-            r'\b(?:chemotherapy|immunotherapy|radiation)\b',
-            r'\b[a-z]+(?:mab|nib|pril|statin|cillin)\b'  # Common drug suffixes
-        ]
-        
-        for pattern in medication_patterns:
-            matches = re.findall(pattern, full_text)
-            entities["medications"].extend(matches)
-        
-        # Lab value patterns
-        lab_patterns = [
-            r'\\bhba1c\\s*[><=≥≤]?\\s*\\d+\\.?\\d*%?\\b',
-            r'\\bcreatinine\\s*[><=≥≤]?\\s*\\d+\\.?\\d*\\b',
-            r'\\bbmi\\s*[><=≥≤]?\\s*\\d+\\.?\\d*\\b',
-            r'\\begfr\\s*[><=≥≤]?\\s*\\d+\\b'
-        ]
-        
-        for pattern in lab_patterns:
-            matches = re.findall(pattern, full_text)
-            entities["lab_values"].extend(matches)
-        
-        # Demographic patterns
-        demographic_patterns = [
-            r'\b(?:pregnant|nursing|childbearing|postmenopausal)\b',
-            r'\b(?:adult|pediatric|geriatric|elderly)\b'
-        ]
-        
-        for pattern in demographic_patterns:
-            matches = re.findall(pattern, full_text)
-            entities["demographics"].extend(matches)
-        
-        # Remove duplicates and clean up
-        for category in entities:
-            entities[category] = list(set(entities[category]))
-        
+        # Store extracted entities in the model
         self.extracted_entities = entities
+        
+        # Update processing metadata
+        if not self.processing_metadata:
+            self.processing_metadata = {}
+            
+        self.processing_metadata.update({
+            "nlp_processor_version": nlp_processor.get_processing_metadata()["processor_version"],
+            "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+            "text_complexity": nlp_processor.calculate_text_complexity(full_text),
+            "entity_counts": {
+                category: len(entities_list) if isinstance(entities_list, list) else 0
+                for category, entities_list in entities.items()
+            }
+        })
+        
         return entities
     
     def get_structured_criteria(self) -> Dict[str, Any]:
@@ -624,7 +586,7 @@ class EligibilityCriteria(BaseModel):
     
     def calculate_similarity(self, patient_text: str) -> float:
         """
-        Calculate semantic similarity with patient description.
+        Calculate semantic similarity with patient description using NLP.
         
         Args:
             patient_text: Text description of patient
@@ -632,25 +594,100 @@ class EligibilityCriteria(BaseModel):
         Returns:
             Similarity score between 0.0 and 1.0
         """
-        # Simple similarity based on keyword overlap
-        # In production, use actual semantic similarity (embeddings)
+        if not patient_text:
+            return 0.0
+            
+        # Use Medical NLP Processor for enhanced similarity calculation
+        nlp_processor = MedicalNLPProcessor()
         
-        criteria_text = f"{self.raw_text} {' '.join(self.inclusion_criteria + self.exclusion_criteria)}".lower()
-        patient_text_lower = patient_text.lower()
+        # Extract entities from both criteria and patient text
+        criteria_text = f"{self.raw_text} {' '.join(self.inclusion_criteria + self.exclusion_criteria)}"
+        criteria_entities = nlp_processor.extract_medical_entities(criteria_text)
+        patient_entities = nlp_processor.extract_medical_entities(patient_text)
         
-        # Extract key medical terms
-        medical_terms = set()
-        for entity_list in self.extracted_entities.values() if self.extracted_entities else []:
-            medical_terms.update([term.lower() for term in entity_list])
+        # Calculate entity overlap scores
+        similarity_scores = []
         
-        # Count overlapping terms
-        patient_words = set(re.findall(r'\\b\\w+\\b', patient_text_lower))
-        overlap = len(medical_terms.intersection(patient_words))
+        # Compare medical conditions
+        criteria_conditions = set(criteria_entities.get("conditions", []))
+        patient_conditions = set(patient_entities.get("conditions", []))
         
-        if len(medical_terms) == 0:
-            return 0.5  # Neutral similarity if no terms extracted
+        if criteria_conditions or patient_conditions:
+            condition_overlap = len(criteria_conditions.intersection(patient_conditions))
+            total_conditions = len(criteria_conditions.union(patient_conditions))
+            condition_similarity = condition_overlap / total_conditions if total_conditions > 0 else 0.0
+            similarity_scores.append(condition_similarity * 0.4)  # Conditions are most important
         
-        return min(1.0, overlap / len(medical_terms))
+        # Compare medications
+        criteria_meds = set(criteria_entities.get("medications", []))
+        patient_meds = set(patient_entities.get("medications", []))
+        
+        if criteria_meds or patient_meds:
+            med_overlap = len(criteria_meds.intersection(patient_meds))
+            total_meds = len(criteria_meds.union(patient_meds))
+            med_similarity = med_overlap / total_meds if total_meds > 0 else 0.0
+            similarity_scores.append(med_similarity * 0.2)  # Medications moderately important
+        
+        # Compare demographics
+        criteria_demo = set(criteria_entities.get("demographics", []))
+        patient_demo = set(patient_entities.get("demographics", []))
+        
+        if criteria_demo or patient_demo:
+            demo_overlap = len(criteria_demo.intersection(patient_demo))
+            total_demo = len(criteria_demo.union(patient_demo))
+            demo_similarity = demo_overlap / total_demo if total_demo > 0 else 0.0
+            similarity_scores.append(demo_similarity * 0.1)  # Demographics less important
+        
+        # Age and gender compatibility
+        age_compatibility = self._calculate_age_compatibility(patient_entities)
+        gender_compatibility = self._calculate_gender_compatibility(patient_entities)
+        
+        similarity_scores.extend([age_compatibility * 0.2, gender_compatibility * 0.1])
+        
+        # Calculate final similarity score
+        final_similarity = sum(similarity_scores)
+        
+        # Ensure score is between 0.0 and 1.0
+        return max(0.0, min(1.0, final_similarity))
+        
+    def _calculate_age_compatibility(self, patient_entities: Dict[str, Any]) -> float:
+        """Calculate age compatibility score."""
+        if not self.age_requirements:
+            return 1.0  # No age restrictions
+            
+        patient_age_info = patient_entities.get("age_requirements", {})
+        if not patient_age_info:
+            return 0.5  # Unknown age
+            
+        criteria_min = self.age_requirements.get("min_age")
+        criteria_max = self.age_requirements.get("max_age")
+        patient_age = patient_age_info.get("min_age")  # Use min_age as actual age
+        
+        if patient_age is None:
+            return 0.5
+            
+        # Check if patient age falls within criteria range
+        if criteria_min and patient_age < criteria_min:
+            return 0.0
+        if criteria_max and patient_age > criteria_max:
+            return 0.0
+            
+        return 1.0
+        
+    def _calculate_gender_compatibility(self, patient_entities: Dict[str, Any]) -> float:
+        """Calculate gender compatibility score."""
+        if not self.gender_requirements or self.gender_requirements == "all":
+            return 1.0  # No gender restrictions
+            
+        patient_gender = patient_entities.get("gender_requirements", "").lower()
+        criteria_gender = self.gender_requirements.lower()
+        
+        if patient_gender == criteria_gender or criteria_gender == "all":
+            return 1.0
+        elif patient_gender and criteria_gender and patient_gender != criteria_gender:
+            return 0.0
+        else:
+            return 0.5  # Unknown gender
     
     def get_embedding(self) -> List[float]:
         """Generate embedding vector for semantic search."""

@@ -12,6 +12,9 @@ from sqlalchemy.orm import declarative_base
 import re
 import json
 
+# Import AI pipeline services
+from ..services.hybrid_search import VectorEmbeddings
+
 Base = declarative_base()
 
 
@@ -216,46 +219,29 @@ class Trial(BaseModel):
     
     def generate_embedding(self, embedding_service=None) -> List[float]:
         """
-        Generate vector embedding for semantic search.
+        Generate vector embedding for semantic search using AI pipeline.
         
         Args:
-            embedding_service: Service to generate embeddings (e.g., Cerebras API)
+            embedding_service: Optional embedding service to use
             
         Returns:
             Vector embedding as list of floats
         """
         if embedding_service is None:
-            # Mock embedding for testing - in production, use actual AI service
-            import hashlib
-            import struct
+            # Use our VectorEmbeddings service from the AI pipeline
+            embedding_service = VectorEmbeddings()
             
-            text = self.get_embedding_text()
-            # Generate deterministic "embedding" from text hash
-            hash_bytes = hashlib.md5(text.encode()).digest()
-            # Convert to list of floats between -1 and 1
-            embedding = []
-            for i in range(0, len(hash_bytes), 4):
-                chunk = hash_bytes[i:i+4]
-                if len(chunk) == 4:
-                    value = struct.unpack('f', chunk)[0]
-                    # Normalize to [-1, 1] range
-                    normalized = max(-1.0, min(1.0, value / 1000.0))
-                    embedding.append(normalized)
-            
-            # Pad to standard size (e.g., 768 dimensions)
-            while len(embedding) < 768:
-                embedding.append(0.0)
-            
-            self.embedding = embedding[:768]
-            self.embedding_model = "mock_model_v1"
-            return self.embedding
-        else:
-            # Use actual embedding service
-            text = self.get_embedding_text()
-            embedding = embedding_service.generate_embedding(text)
-            self.embedding = embedding
-            self.embedding_model = embedding_service.model_name
-            return embedding
+        # Get text for embedding
+        text = self.get_embedding_text()
+        
+        # Generate embedding using our AI service
+        embedding = embedding_service.generate_embedding(text)
+        
+        # Store embedding in the model
+        self.embedding = embedding
+        self.embedding_model = "medical_nlp_v1"
+        
+        return embedding
     
     def get_embedding_text(self) -> str:
         """
