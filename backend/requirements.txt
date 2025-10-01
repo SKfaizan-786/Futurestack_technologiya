@@ -19,3 +19,4 @@ numpy>=1.26.4
 transformers>=4.36.0
 alembic
 structlog
+pytest-asyncio

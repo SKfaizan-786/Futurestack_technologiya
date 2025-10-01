@@ -16,6 +16,9 @@ import uvicorn
 
 from ..utils.config import settings
 from .health import router as health_router
+from .endpoints.match import router as match_router
+from .endpoints.trials import router as trials_router
+from .endpoints.notifications import router as notifications_router
 from .middleware import ErrorHandlingMiddleware
 from ..models.base import init_database, db_manager
 from ..utils.logging import configure_logging
@@ -231,11 +234,9 @@ def create_app() -> FastAPI:
     
     # Mount API routers
     app.include_router(health_router, prefix=f"{settings.api_prefix}/health", tags=["health"])
-    
-    # TODO: Add remaining routers
-    # app.include_router(trials.router, prefix=f"{settings.api_prefix}/trials", tags=["trials"])
-    # app.include_router(matching.router, prefix=f"{settings.api_prefix}/match", tags=["matching"])
-    # app.include_router(patients.router, prefix=f"{settings.api_prefix}/patients", tags=["patients"])
+    app.include_router(match_router, prefix=f"{settings.api_prefix}", tags=["matching"])
+    app.include_router(trials_router, prefix=f"{settings.api_prefix}", tags=["trials"])
+    app.include_router(notifications_router, prefix=f"{settings.api_prefix}", tags=["notifications"])
     
     logger.info("FastAPI application created", 
                title=app.title, version=app.version, environment=settings.environment)

@@ -357,6 +357,50 @@ Please analyze the compatibility between this patient and trial criteria.
         except (KeyError, IndexError, json.JSONDecodeError) as e:
             raise CerebrasAPIError(f"Invalid response format: {str(e)}")
     
+    async def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.1,
+        max_tokens: Optional[int] = None,
+        stream: bool = False
+    ) -> CerebrasResponse:
+        """
+        Generic chat completion method for LLM interactions.
+        
+        Args:
+            messages: List of message dictionaries with 'role' and 'content'
+            temperature: Response randomness (0.0-1.0)
+            max_tokens: Maximum tokens in response
+            stream: Whether to stream response
+            
+        Returns:
+            CerebrasResponse object
+        """
+        start_time = time.time()
+        response = await self._make_request(
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=stream
+        )
+        response_time = time.time() - start_time
+        
+        try:
+            data = response.json()
+            choice = data["choices"][0]
+            
+            return CerebrasResponse(
+                content=choice["message"]["content"],
+                usage=data.get("usage", {}),
+                model=data.get("model", self.model),
+                finish_reason=choice.get("finish_reason", "unknown"),
+                response_time=response_time,
+                request_id=response.headers.get("x-request-id")
+            )
+            
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            raise CerebrasAPIError(f"Invalid response format: {str(e)}")
+    
     async def batch_analyze_trials(
         self,
         patient_data: Dict[str, Any],

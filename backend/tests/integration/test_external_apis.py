@@ -48,6 +48,7 @@ class TestExternalAPIIntegration:
             "totalCount": 1
         }
     
+    @pytest.mark.asyncio
     async def test_cerebras_api_connectivity(self, mock_cerebras_response: Dict[str, Any]):
         """Test basic connectivity to Cerebras API."""
         # Arrange
@@ -61,6 +62,9 @@ class TestExternalAPIIntegration:
         # Should handle SSL/TLS properly
         pass  # Placeholder - will implement after creating client
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_clinicaltrials_api_connectivity(self, mock_trials_response: Dict[str, Any]):
         """Test basic connectivity to ClinicalTrials.gov API."""
         # Arrange
@@ -73,6 +77,9 @@ class TestExternalAPIIntegration:
         # Should handle API versioning (v2.0)
         pass  # Placeholder - will implement after creating client
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_concurrent_api_requests(self):
         """Test handling multiple concurrent API requests."""
         # Arrange
@@ -88,6 +95,9 @@ class TestExternalAPIIntegration:
         # Should handle responses in correct order
         pass  # Placeholder - will implement after creating clients
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_rate_limiting_enforcement(self):
         """Test rate limiting across both APIs."""
         # Arrange
@@ -101,6 +111,9 @@ class TestExternalAPIIntegration:
         # Should not drop requests under normal load
         pass  # Placeholder - will implement after creating clients
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_error_propagation_and_fallbacks(self):
         """Test error handling across the API integration layer."""
         # Arrange
@@ -118,6 +131,9 @@ class TestExternalAPIIntegration:
         # Should maintain system stability during API outages
         pass  # Placeholder - will implement after creating clients
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_timeout_handling_across_apis(self):
         """Test timeout handling for both external APIs."""
         # Arrange
@@ -133,6 +149,9 @@ class TestExternalAPIIntegration:
         # Should log timeout events for monitoring
         pass  # Placeholder - will implement after creating clients
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_api_response_validation(self):
         """Test validation of API responses before processing."""
         # Arrange
@@ -150,6 +169,7 @@ class TestExternalAPIIntegration:
         # Should not crash on unexpected response formats
         pass  # Placeholder - will implement after creating clients
     
+    @pytest.mark.asyncio
     async def test_hipaa_compliance_in_api_calls(self):
         """Test HIPAA compliance across all API interactions."""
         # Arrange
@@ -166,6 +186,7 @@ class TestExternalAPIIntegration:
         # Should maintain audit trails without exposing PII
         pass  # Placeholder - will implement after creating clients
     
+    @pytest.mark.asyncio
     async def test_api_circuit_breaker_pattern(self):
         """Test circuit breaker pattern for API resilience."""
         # Arrange
@@ -180,6 +201,7 @@ class TestExternalAPIIntegration:
         pass  # Placeholder - will implement after creating clients
     
     @pytest.mark.slow
+    @pytest.mark.asyncio
     async def test_api_performance_benchmarks(self):
         """Test API performance and latency benchmarks."""
         # Arrange
@@ -203,6 +225,9 @@ class TestExternalAPIIntegration:
 class TestAPIDataFlow:
     """Integration tests for data flow between APIs and our system."""
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_end_to_end_patient_matching_flow(self):
         """Test complete patient-trial matching workflow."""
         # Arrange
@@ -221,6 +246,9 @@ class TestAPIDataFlow:
         # 5. Should return structured response with reasoning
         pass  # Placeholder - will implement after creating full pipeline
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_data_consistency_across_api_calls(self):
         """Test data consistency when making multiple API calls."""
         # Arrange
@@ -233,6 +261,9 @@ class TestAPIDataFlow:
         # Should validate data integrity throughout flow
         pass  # Placeholder - will implement after creating full pipeline
     
+    pass
+        
+    @pytest.mark.asyncio
     async def test_caching_integration_with_apis(self):
         """Test caching layer integration with external APIs."""
         # Arrange

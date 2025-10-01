@@ -27,8 +27,8 @@ class PatientDB(Base):
     medical_conditions = Column(JSON, nullable=False, default=[])
     medications = Column(JSON, nullable=False, default=[])
     allergies = Column(JSON, nullable=False, default=[])
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Audit fields for HIPAA compliance
     audit_log_id = Column(String(100), nullable=True)
@@ -59,11 +59,11 @@ class Patient(BaseModel):
         description="List of known allergies"
     )
     created_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Record creation timestamp"
     )
     updated_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Record last update timestamp"
     )
     

@@ -15,7 +15,7 @@ class TestMatchResultModelContract:
     
     def test_match_result_basic_structure(self):
         """MatchResult must have proper basic structure."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         valid_match_data = {
             "match_id": "MATCH-2025-001",
@@ -46,7 +46,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_score_validation(self):
         """Match scores must be within valid range [0.0, 1.0]."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -77,7 +77,7 @@ class TestMatchResultModelContract:
                 
     def test_match_status_validation(self):
         """Match status must be from valid options."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -106,7 +106,7 @@ class TestMatchResultModelContract:
             
     def test_reasoning_chain_structure(self):
         """Reasoning chain must have proper structure."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -156,7 +156,7 @@ class TestMatchResultModelContract:
         
     def test_reasoning_step_validation(self):
         """Each reasoning step must have required fields."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -195,7 +195,7 @@ class TestMatchResultModelContract:
                 
     def test_reasoning_categories(self):
         """Reasoning categories must be from valid options."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -234,7 +234,7 @@ class TestMatchResultModelContract:
             
     def test_reasoning_result_validation(self):
         """Reasoning step results must be from valid options."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         base_data = {
             "match_id": "MATCH-001",
@@ -269,7 +269,7 @@ class TestMatchResultModelContract:
             
     def test_match_result_eligibility_summary(self):
         """MatchResult must provide eligibility summary."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         reasoning_chain = [
             {
@@ -321,7 +321,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_explanation_generation(self):
         """MatchResult must generate human-readable explanations."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         reasoning_chain = [
             {
@@ -359,7 +359,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_confidence_factors(self):
         """MatchResult must track confidence factors."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         match_data = {
             "match_id": "MATCH-001",
@@ -384,7 +384,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_next_steps(self):
         """MatchResult must suggest next steps for patients."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         match_data = {
             "match_id": "MATCH-001",
@@ -408,7 +408,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_audit_trail(self):
         """MatchResult must support audit trail for HIPAA compliance."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         match_data = {
             "match_id": "MATCH-001",
@@ -433,7 +433,7 @@ class TestMatchResultModelContract:
         
     def test_match_result_serialization(self):
         """MatchResult must serialize/deserialize correctly."""
-        from backend.src.models.match_result import MatchResult
+        from src.models.match_result import MatchResult
         
         original_data = {
             "match_id": "MATCH-001",

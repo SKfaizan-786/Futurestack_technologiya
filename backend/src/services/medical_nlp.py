@@ -18,11 +18,47 @@ from pathlib import Path
 class MedicalVocabulary:
     """Medical vocabulary and pattern definitions."""
     
+    # Specific cancer subtypes and compound conditions (checked first)
+    COMPOUND_CONDITIONS = [
+        'triple-negative breast cancer',
+        'estrogen receptor positive breast cancer',
+        'her2 positive breast cancer',
+        'her2 negative breast cancer',
+        'non-small cell lung cancer',
+        'small cell lung cancer',
+        'acute myeloid leukemia',
+        'chronic lymphocytic leukemia',
+        'stage 1 breast cancer',
+        'stage 2 breast cancer', 
+        'stage 3 breast cancer',
+        'stage 4 breast cancer',
+        'metastatic breast cancer',
+        'locally advanced breast cancer',
+        'type 1 diabetes mellitus',
+        'type 2 diabetes mellitus',
+        'gestational diabetes',
+        'chronic kidney disease',
+        'end stage renal disease',
+        'coronary artery disease',
+        'peripheral artery disease',
+        'acute myocardial infarction',
+        'congestive heart failure',
+        'chronic obstructive pulmonary disease',
+        'inflammatory bowel disease',
+        'rheumatoid arthritis',
+        'systemic lupus erythematosus',
+        'multiple sclerosis',
+        'parkinson disease',
+        'alzheimer disease'
+    ]
+    
     # Common medical conditions
     CONDITIONS = {
-        'diabetes': ['diabetes', 'diabetes mellitus', 'type 1 diabetes', 'type 2 diabetes', 'diabetic', 'dm'],
+        'diabetes': ['diabetes', 'diabetes mellitus', 'type 1 diabetes', 'type 2 diabetes', 'diabetic', 'dm', 't2dm', 'diabetes type 2', 'diabetes mellitus type ii'],
         'hypertension': ['hypertension', 'high blood pressure', 'htn', 'elevated blood pressure'],
         'cancer': ['cancer', 'carcinoma', 'tumor', 'neoplasm', 'malignancy', 'oncology'],
+        'breast_cancer': ['breast cancer', 'breast carcinoma', 'breast neoplasm', 'breast tumor'],
+        'lung_cancer': ['lung cancer', 'lung carcinoma', 'nsclc', 'non-small cell lung cancer', 'adenocarcinoma of lung', 'egfr mutation', 'egfr positive', 'brain metastases'],
         'cardiovascular': ['heart disease', 'cardiovascular disease', 'cvd', 'coronary artery disease', 'cad'],
         'respiratory': ['asthma', 'copd', 'chronic obstructive pulmonary disease', 'bronchitis'],
         'kidney': ['kidney disease', 'renal disease', 'chronic kidney disease', 'ckd', 'nephropathy'],
@@ -48,7 +84,8 @@ class MedicalVocabulary:
         'cardiac': ['angioplasty', 'bypass', 'catheterization', 'echocardiogram', 'ekg', 'ecg'],
         'imaging': ['mri', 'ct scan', 'x-ray', 'ultrasound', 'pet scan', 'mammogram'],
         'biopsy': ['biopsy', 'tissue sample', 'pathology'],
-        'transplant': ['transplant', 'organ transplant', 'bone marrow transplant']
+        'transplant': ['transplant', 'organ transplant', 'bone marrow transplant'],
+        'treatment': ['immunotherapy', 'chemotherapy', 'radiation therapy', 'targeted therapy']
     }
     
     # Lab values and tests
@@ -58,7 +95,8 @@ class MedicalVocabulary:
         'kidney': ['creatinine', 'egfr', 'bun', 'protein in urine'],
         'liver': ['alt', 'ast', 'bilirubin', 'alkaline phosphatase'],
         'cardiac': ['troponin', 'bnp', 'nt-probnp'],
-        'blood': ['hemoglobin', 'hematocrit', 'white blood cell', 'platelet count']
+        'blood': ['hemoglobin', 'hematocrit', 'white blood cell', 'platelet count'],
+        'biomarkers': ['pd-l1', 'pd-1', 'brca1', 'brca2', 'her2', 'egfr', 'kras']
     }
 
 
@@ -169,16 +207,20 @@ class MedicalNLPProcessor:
                 "procedures": [],
                 "lab_values": [],
                 "demographics": [],
-                "age_requirements": {},
+                "age_requirements": {"min_age": None, "max_age": None, "age_units": "years"},
                 "gender_requirements": "all"
             }
             
         # Preprocess text
         processed_text = self.preprocess_text(text)
+        original_text = text.lower()  # Keep original for compound pattern matching
         
-        # Extract entities by category
+        # First, extract compound conditions (multi-word medical terms)
+        compound_conditions = self._extract_compound_conditions(original_text)
+        
+        # Then extract other entities by category
         entities = {
-            "conditions": self._extract_entities_by_patterns(processed_text, self.condition_patterns),
+            "conditions": compound_conditions + self._extract_entities_by_patterns(processed_text, self.condition_patterns),
             "medications": self._extract_entities_by_patterns(processed_text, self.medication_patterns),
             "procedures": self._extract_entities_by_patterns(processed_text, self.procedure_patterns),
             "lab_values": self._extract_entities_by_patterns(processed_text, self.lab_patterns),
@@ -195,6 +237,23 @@ class MedicalNLPProcessor:
             entities[key] = list(set(entities[key]))
             
         return entities
+        
+    def _extract_compound_conditions(self, text: str) -> List[str]:
+        """Extract compound medical conditions that should be preserved as complete terms."""
+        found_conditions = []
+        
+        # Check each compound condition pattern
+        for condition in self.vocabulary.COMPOUND_CONDITIONS:
+            # Use a simpler approach: just check if the condition appears in the text
+            # with flexible spacing and hyphen handling
+            condition_pattern = re.escape(condition)
+            condition_pattern = condition_pattern.replace(r'\\-', r'[-\\s]*')  # Allow hyphen or space
+            condition_pattern = condition_pattern.replace(r'\\ ', r'\\s+')    # Allow flexible spacing
+            
+            if re.search(condition_pattern, text, re.IGNORECASE):
+                found_conditions.append(condition)
+                
+        return found_conditions
         
     def _extract_entities_by_patterns(self, text: str, patterns: List[Tuple[str, re.Pattern]]) -> List[str]:
         """Extract entities using compiled regex patterns."""

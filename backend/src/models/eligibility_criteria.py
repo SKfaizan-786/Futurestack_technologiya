@@ -45,8 +45,8 @@ class EligibilityCriteriaDB(Base):
     locale = Column(String(10), default="en-US")
     terminology_system = Column(String(50), default="SNOMED-CT")
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class EligibilityCriteria(BaseModel):
@@ -108,11 +108,11 @@ class EligibilityCriteria(BaseModel):
     )
     
     created_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Creation timestamp"
     )
     updated_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Last update timestamp"
     )
     

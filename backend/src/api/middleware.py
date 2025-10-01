@@ -16,7 +16,6 @@ from starlette.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_429_TOO_MANY_REQUESTS,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_503_SERVICE_UNAVAILABLE
@@ -306,7 +305,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             HTTP_401_UNAUTHORIZED: "authentication",
             HTTP_403_FORBIDDEN: "authorization",
             HTTP_404_NOT_FOUND: "not_found",
-            HTTP_422_UNPROCESSABLE_ENTITY: "validation",
+            422: "validation",
             HTTP_429_TOO_MANY_REQUESTS: "rate_limit",
             HTTP_500_INTERNAL_SERVER_ERROR: "internal",
             HTTP_503_SERVICE_UNAVAILABLE: "service_unavailable"

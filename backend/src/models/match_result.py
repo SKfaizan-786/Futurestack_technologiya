@@ -11,8 +11,18 @@ from sqlalchemy import Column, String, Integer, JSON, DateTime, Text, Float
 from sqlalchemy.orm import declarative_base
 import json
 import uuid
+from enum import Enum
 
 Base = declarative_base()
+
+
+class ReasoningType(Enum):
+    """Types of medical reasoning."""
+    ELIGIBILITY_ASSESSMENT = "eligibility_assessment"
+    TRIAL_MATCHING = "trial_matching"
+    CONTRAINDICATION_CHECK = "contraindication_check"
+    RISK_ASSESSMENT = "risk_assessment"
+    DOSAGE_RECOMMENDATION = "dosage_recommendation"
 
 
 class MatchResultDB(Base):
@@ -42,8 +52,8 @@ class MatchResultDB(Base):
     processing_time_ms = Column(Integer, nullable=True)
     ai_model_version = Column(String(100), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class MatchResult(BaseModel):
@@ -108,11 +118,11 @@ class MatchResult(BaseModel):
     )
     
     created_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Creation timestamp"
     )
     updated_at: Optional[datetime] = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Last update timestamp"
     )
     
@@ -597,3 +607,97 @@ class MatchResult(BaseModel):
             created_at=db_model.created_at,
             updated_at=db_model.updated_at
         )
+
+
+class ReasoningStep(BaseModel):
+    """
+    Individual step in medical reasoning chain.
+    """
+    
+    step: str = Field(..., description="Step identifier or number")
+    analysis: str = Field(..., description="Analysis performed in this step")
+    conclusion: str = Field(..., description="Conclusion reached in this step")
+    confidence: Optional[float] = Field(None, description="Confidence in this step")
+    evidence: Optional[List[str]] = Field(None, description="Supporting evidence")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "step": "biomarker_analysis",
+                "analysis": "Patient has HER2+ breast cancer, trial targets HER2+ patients",
+                "conclusion": "Biomarker match - eligible",
+                "confidence": 0.95,
+                "evidence": ["HER2 IHC 3+", "FISH amplified"]
+            }
+        }
+    )
+
+
+class MedicalReasoningResult(BaseModel):
+    """
+    Complete medical reasoning result from LLM analysis.
+    """
+    
+    reasoning_type: ReasoningType = Field(
+        default=ReasoningType.ELIGIBILITY_ASSESSMENT,
+        description="Type of reasoning performed"
+    )
+    reasoning_steps: List[ReasoningStep] = Field(
+        default_factory=list,
+        description="Step-by-step reasoning chain"
+    )
+    eligibility_status: str = Field(
+        default="requires_review",
+        description="Overall eligibility determination: eligible, ineligible, or requires_review"
+    )
+    confidence_score: float = Field(
+        ..., 
+        ge=0.0, le=1.0,
+        description="Overall confidence in reasoning"
+    )
+    eligibility_summary: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Summary of eligibility assessment"
+    )
+    contraindications: List[str] = Field(
+        default_factory=list,
+        description="Identified contraindications"
+    )
+    confidence_factors: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Factors affecting confidence"
+    )
+    llm_metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description="LLM processing metadata"
+    )
+    processing_time_ms: Optional[float] = Field(
+        None,
+        description="Processing time in milliseconds"
+    )
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "reasoning_steps": [
+                    {
+                        "step": "age_check",
+                        "analysis": "Patient age 55 falls within trial range 18-75",
+                        "conclusion": "Age criteria met",
+                        "confidence": 1.0
+                    }
+                ],
+                "confidence_score": 0.87,
+                "eligibility_summary": {
+                    "assessment": "eligible",
+                    "criteria_met": ["age", "diagnosis", "performance_status"],
+                    "concerns": ["travel_distance"]
+                },
+                "contraindications": [],
+                "confidence_factors": {
+                    "biomarker_match": 0.9,
+                    "comorbidity_assessment": 0.8
+                }
+            }
+        }
+    )

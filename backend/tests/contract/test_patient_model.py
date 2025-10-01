@@ -16,7 +16,7 @@ class TestPatientModelContract:
     def test_patient_basic_demographics_validation(self):
         """Patient must validate basic demographic data."""
         # This test will pass once Patient model is implemented
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         valid_patient_data = {
             "patient_id": "PAT-2025-001",
@@ -36,7 +36,7 @@ class TestPatientModelContract:
         
     def test_patient_age_validation(self):
         """Patient age must be within valid range."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         # Valid ages
         valid_ages = [18, 25, 65, 100]
@@ -60,7 +60,7 @@ class TestPatientModelContract:
                 
     def test_patient_gender_validation(self):
         """Patient gender must be from valid options."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         valid_genders = ["male", "female", "other", "prefer_not_to_say"]
         base_data = {
@@ -81,7 +81,7 @@ class TestPatientModelContract:
             
     def test_patient_medical_conditions_format(self):
         """Medical conditions must be properly formatted."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         base_data = {
             "patient_id": "PAT-001",
@@ -105,7 +105,7 @@ class TestPatientModelContract:
             
     def test_patient_medication_validation(self):
         """Medications must be properly validated."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         base_data = {
             "patient_id": "PAT-001",
@@ -128,7 +128,7 @@ class TestPatientModelContract:
             
     def test_patient_allergy_tracking(self):
         """Patient allergies must be properly tracked."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         base_data = {
             "patient_id": "PAT-001",
@@ -151,7 +151,7 @@ class TestPatientModelContract:
             
     def test_patient_id_format_validation(self):
         """Patient ID must follow expected format."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         base_data = {
             "age": 30,
@@ -182,7 +182,7 @@ class TestPatientModelContract:
                 
     def test_patient_privacy_compliance(self):
         """Patient model must support HIPAA privacy requirements."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         patient_data = {
             "patient_id": "PAT-2025-001",
@@ -205,7 +205,7 @@ class TestPatientModelContract:
         
     def test_patient_search_compatibility(self):
         """Patient data must be compatible with AI search pipeline."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         patient_data = {
             "patient_id": "PAT-2025-001",
@@ -227,7 +227,7 @@ class TestPatientModelContract:
         
     def test_patient_eligibility_data_extraction(self):
         """Patient must provide data for eligibility checking."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         patient_data = {
             "patient_id": "PAT-2025-001",
@@ -251,7 +251,7 @@ class TestPatientModelContract:
             
     def test_patient_serialization_deserialization(self):
         """Patient data must serialize/deserialize correctly."""
-        from backend.src.models.patient import Patient
+        from src.models.patient import Patient
         
         original_data = {
             "patient_id": "PAT-2025-001",

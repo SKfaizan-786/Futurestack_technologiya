@@ -56,6 +56,7 @@ class TestCerebrasAPIContract:
         Analyze compatibility and provide reasoning.
         """
     
+    @pytest.mark.asyncio
     async def test_cerebras_client_initialization(self):
         """Test client can be initialized with proper configuration."""
         # This test ensures our client can be created with required parameters
@@ -75,6 +76,7 @@ class TestCerebrasAPIContract:
         # Should validate required parameters
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_chat_completion_request_format(self, patient_matching_prompt: str):
         """Test chat completion request follows OpenAI-compatible format."""
         # Arrange
@@ -101,6 +103,7 @@ class TestCerebrasAPIContract:
         # Should handle system and user messages correctly
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_successful_response_parsing(self, mock_client_response: Dict[str, Any]):
         """Test successful API response parsing."""
         # Arrange
@@ -115,6 +118,7 @@ class TestCerebrasAPIContract:
         # Should return structured response object
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_rate_limiting_handling(self):
         """Test proper handling of rate limit responses."""
         # Arrange
@@ -133,6 +137,7 @@ class TestCerebrasAPIContract:
         # Should eventually raise appropriate exception if retries exhausted
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_authentication_error_handling(self):
         """Test handling of authentication errors."""
         # Arrange
@@ -150,6 +155,7 @@ class TestCerebrasAPIContract:
         # Should include helpful error message
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_timeout_handling(self):
         """Test proper timeout handling."""
         # Arrange
@@ -161,6 +167,7 @@ class TestCerebrasAPIContract:
         # Should clean up resources properly
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_medical_reasoning_prompt_construction(self):
         """Test construction of medical reasoning prompts."""
         # Arrange
@@ -183,6 +190,7 @@ class TestCerebrasAPIContract:
         # Should request step-by-step reasoning
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_hipaa_safe_error_responses(self):
         """Test that error responses don't leak patient data."""
         # Arrange
@@ -194,6 +202,7 @@ class TestCerebrasAPIContract:
         # Should maintain HIPAA compliance in all error paths
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_concurrent_request_handling(self):
         """Test handling of multiple concurrent requests."""
         # Arrange

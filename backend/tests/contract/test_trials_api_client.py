@@ -78,6 +78,7 @@ class TestClinicalTrialsAPIContract:
             "format": "json"
         }
     
+    @pytest.mark.asyncio
     async def test_client_initialization_with_rate_limiting(self):
         """Test client initialization with proper rate limiting."""
         # Arrange
@@ -94,6 +95,7 @@ class TestClinicalTrialsAPIContract:
         # Should configure timeout and retry logic
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_search_studies_request_format(self, search_parameters: Dict[str, Any]):
         """Test search request follows API v2.0 specification."""
         # Arrange
@@ -106,6 +108,7 @@ class TestClinicalTrialsAPIContract:
         # Should include proper headers
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_successful_search_response_parsing(self, mock_trials_search_response: Dict[str, Any]):
         """Test successful search response parsing."""
         # Arrange
@@ -121,6 +124,7 @@ class TestClinicalTrialsAPIContract:
         # Should return structured trial objects
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_pagination_handling(self):
         """Test proper pagination through search results."""
         # Arrange
@@ -143,6 +147,7 @@ class TestClinicalTrialsAPIContract:
         # Should detect end of pagination (nextPageToken=None)
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_rate_limit_compliance(self):
         """Test compliance with API rate limits."""
         # Arrange
@@ -155,6 +160,7 @@ class TestClinicalTrialsAPIContract:
         # Should respect 429 Too Many Requests responses
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_study_detail_fetching(self):
         """Test fetching detailed study information."""
         # Arrange
@@ -174,6 +180,7 @@ class TestClinicalTrialsAPIContract:
         # Should return normalized study object
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_geographic_filtering(self):
         """Test geographic proximity filtering."""
         # Arrange
@@ -190,6 +197,7 @@ class TestClinicalTrialsAPIContract:
         # Should return trials within specified radius
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_condition_based_search(self):
         """Test searching by medical conditions."""
         # Arrange
@@ -206,6 +214,7 @@ class TestClinicalTrialsAPIContract:
         # Should combine multiple conditions appropriately
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_eligibility_criteria_extraction(self):
         """Test extraction and parsing of eligibility criteria."""
         # Arrange
@@ -229,6 +238,7 @@ class TestClinicalTrialsAPIContract:
         # Should handle various text formats
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_study_status_filtering(self):
         """Test filtering by study recruitment status."""
         # Arrange
@@ -246,6 +256,7 @@ class TestClinicalTrialsAPIContract:
         # Should respect status priority ordering
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_error_handling_and_retries(self):
         """Test proper error handling and retry logic."""
         # Arrange
@@ -263,6 +274,7 @@ class TestClinicalTrialsAPIContract:
         # Should fail fast on permanent errors
         pass  # Placeholder for actual implementation
     
+    @pytest.mark.asyncio
     async def test_data_freshness_tracking(self):
         """Test tracking of data freshness and updates."""
         # Arrange
@@ -279,6 +291,7 @@ class TestClinicalTrialsAPIContract:
 class TestTrialDataNormalization:
     """Contract tests for trial data normalization and standardization."""
     
+    @pytest.mark.asyncio
     async def test_trial_object_structure(self):
         """Test standardized trial object structure."""
         # Expected normalized trial structure:

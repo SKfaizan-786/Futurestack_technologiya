@@ -331,6 +331,10 @@ class ClinicalTrialsClient:
         Returns:
             Normalized ClinicalTrial object
         """
+        # Defensive check - ensure study_data is a dictionary
+        if not isinstance(study_data, dict):
+            raise ValueError(f"Expected dict for study_data, got {type(study_data)}: {study_data}")
+        
         protocol = study_data.get("protocolSection", {})
         
         # Basic identification
@@ -474,12 +478,18 @@ class ClinicalTrialsClient:
         
         # Status filtering
         if status_filter:
-            params["filter.overallStatus"] = status_filter
-        else:
-            # Default to actively recruiting trials
-            params["filter.overallStatus"] = [
-                "Recruiting", "Not yet recruiting", "Active, not recruiting"
-            ]
+            # Ensure comma-separated format for API
+            if isinstance(status_filter, list):
+                params["filter.overallStatus"] = ",".join(status_filter)
+            else:
+                params["filter.overallStatus"] = status_filter
+        # Temporarily disable default status filter to fix API parameter errors
+        # The correct status values need to be researched from ClinicalTrials.gov API documentation
+        # else:
+        #     # Default to actively recruiting trials
+        #     params["filter.overallStatus"] = ",".join([
+        #         "Recruiting", "Not yet recruiting", "Active, not recruiting"
+        #     ])
         
         # Geographic filtering
         if location:

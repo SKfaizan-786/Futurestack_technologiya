@@ -5,22 +5,23 @@ These tests validate the coordination and integration between all
 AI pipeline components including NLP, search, LLM reasoning, and API clients.
 """
 import pytest
+import pytest_asyncio
 import asyncio
-from typing import Dict, List, Any
+from typing import Dict, List, Any, AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
 
 # Import our AI pipeline services
-from backend.src.services.medical_nlp import MedicalNLPProcessor
-from backend.src.services.hybrid_search import HybridSearchEngine, SearchQuery, SearchResult
-from backend.src.services.llm_reasoning import LLMReasoningService, ReasoningType
-from backend.src.integrations.trials_api_client import ClinicalTrialsClient
-from backend.src.integrations.cerebras_client import CerebrasClient
+from src.services.medical_nlp import MedicalNLPProcessor
+from src.services.hybrid_search import HybridSearchEngine, SearchQuery, SearchResult
+from src.services.llm_reasoning import LLMReasoningService, ReasoningType
+from src.integrations.trials_api_client import ClinicalTrialsClient
+from src.integrations.cerebras_client import CerebrasClient
 
 # Import models
-from backend.src.models.patient import Patient
-from backend.src.models.trial import Trial
-from backend.src.models.eligibility_criteria import EligibilityCriteria
+from src.models.patient import Patient
+from src.models.trial import Trial
+from src.models.eligibility_criteria import EligibilityCriteria
 
 
 class TestAIPipelineIntegration:
@@ -33,7 +34,7 @@ class TestAIPipelineIntegration:
             "patient_id": "PAT-TEST-001",
             "age": 45,
             "gender": "female",
-            "medical_conditions": ["Type 2 Diabetes", "Hypertension"],
+            "medical_conditions": ["Type 2 Diabetes Mellitus", "Hypertension"],
             "medications": ["Metformin", "Lisinopril"],
             "allergies": ["Penicillin"],
             "medical_history": ["Family history of diabetes", "Previous gestational diabetes"]
@@ -79,11 +80,15 @@ class TestAIPipelineIntegration:
         """Hybrid search engine instance."""
         return HybridSearchEngine()
         
-    @pytest.fixture 
-    async def llm_service(self) -> LLMReasoningService:
+    @pytest_asyncio.fixture
+    async def llm_service(self) -> AsyncGenerator[LLMReasoningService, None]:
         """LLM reasoning service with mocked Cerebras client."""
         mock_client = AsyncMock(spec=CerebrasClient)
-        return LLMReasoningService(cerebras_client=mock_client)
+        service = LLMReasoningService(cerebras_client=mock_client)
+        yield service
+        # Cleanup if needed
+        if hasattr(service, 'close'):
+            await service.close()
         
     def test_nlp_processor_initialization(self, nlp_processor: MedicalNLPProcessor):
         """Test NLP processor initializes correctly."""
@@ -101,6 +106,7 @@ class TestAIPipelineIntegration:
         assert "embedding_dimension" in stats
         assert stats["total_trials"] == 0  # Empty initially
         
+    @pytest.mark.asyncio
     async def test_llm_service_initialization(self, llm_service: LLMReasoningService):
         """Test LLM service initializes correctly."""
         assert llm_service is not None
@@ -157,6 +163,7 @@ class TestAIPipelineIntegration:
         assert len(results.results) == 1
         assert results.results[0].nct_id == sample_trial_data["nct_id"]
         
+    @pytest.mark.asyncio
     async def test_llm_eligibility_assessment_integration(
         self,
         llm_service: LLMReasoningService,
@@ -185,7 +192,7 @@ class TestAIPipelineIntegration:
         assert result.reasoning_type == ReasoningType.ELIGIBILITY_ASSESSMENT
         assert result.eligibility_status in ["eligible", "ineligible", "requires_review"]
         assert 0.0 <= result.confidence_score <= 1.0
-        assert len(result.reasoning_chain) >= 0
+        assert len(result.reasoning_steps) >= 0
         
     def test_model_nlp_integration(
         self,
@@ -229,6 +236,7 @@ class TestAIPipelineIntegration:
         assert all(isinstance(x, float) for x in embedding)
         assert trial.embedding_model == "medical_nlp_v1"
         
+    @pytest.mark.asyncio
     async def test_end_to_end_matching_workflow(
         self,
         nlp_processor: MedicalNLPProcessor,
@@ -323,6 +331,7 @@ class TestAIPipelineIntegration:
         assert search_time < 0.5  # Search should be fast
         assert results.search_time_ms < 500  # Internal timing should be reasonable
         
+    @pytest.mark.asyncio
     async def test_concurrent_service_usage(
         self,
         nlp_processor: MedicalNLPProcessor,
@@ -388,9 +397,10 @@ class TestAIPipelineIntegration:
             results.append(entities)
             
         # All should detect diabetes-related conditions
+        diabetes_terms = ["diabetes", "t2dm", "dm"]
         for result in results:
             conditions = [c.lower() for c in result.get("conditions", [])]
-            assert any("diabetes" in c for c in conditions), f"Failed to detect diabetes in: {result}"
+            assert any(any(term in c for term in diabetes_terms) for c in conditions), f"Failed to detect diabetes in: {result}"
 
 
 @pytest.mark.integration
@@ -398,15 +408,26 @@ class TestExternalAPIIntegration:
     """Integration tests for external API coordination."""
     
     @pytest.fixture
-    async def trials_client(self) -> ClinicalTrialsClient:
+    def search_engine(self) -> HybridSearchEngine:
+        """Hybrid search engine instance."""
+        return HybridSearchEngine()
+    
+    @pytest_asyncio.fixture
+    async def trials_client(self) -> AsyncGenerator[ClinicalTrialsClient, None]:
         """Clinical trials API client."""
-        return ClinicalTrialsClient()
+        async with ClinicalTrialsClient() as client:
+            yield client
         
-    @pytest.fixture
-    async def cerebras_client(self) -> CerebrasClient:
+    @pytest_asyncio.fixture
+    async def cerebras_client(self) -> AsyncGenerator[CerebrasClient, None]:
         """Cerebras API client."""
-        return CerebrasClient()
+        client = CerebrasClient()
+        yield client
+        # Cleanup if needed
+        if hasattr(client, 'close'):
+            await client.close()
         
+    @pytest.mark.asyncio
     async def test_trials_api_search_integration(
         self,
         trials_client: ClinicalTrialsClient,

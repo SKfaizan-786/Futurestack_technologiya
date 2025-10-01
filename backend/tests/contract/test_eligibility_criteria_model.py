@@ -14,7 +14,7 @@ class TestEligibilityCriteriaModelContract:
     
     def test_eligibility_criteria_basic_structure(self):
         """EligibilityCriteria must have proper basic structure."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         valid_criteria_data = {
             "criteria_id": "CRIT-2025-001",
@@ -47,7 +47,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_age_requirements_validation(self):
         """Age requirements must be properly validated."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         base_data = {
             "criteria_id": "CRIT-001",
@@ -83,7 +83,7 @@ class TestEligibilityCriteriaModelContract:
                 
     def test_gender_requirements_validation(self):
         """Gender requirements must be from valid options."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         base_data = {
             "criteria_id": "CRIT-001",
@@ -105,7 +105,7 @@ class TestEligibilityCriteriaModelContract:
             
     def test_nlp_processing_capabilities(self):
         """EligibilityCriteria must support NLP processing."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         raw_criteria_text = """
         Inclusion Criteria:
@@ -145,7 +145,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_medical_entity_extraction(self):
         """EligibilityCriteria must extract medical entities."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         criteria_data = {
             "criteria_id": "CRIT-ENTITY-001",
@@ -172,7 +172,7 @@ class TestEligibilityCriteriaModelContract:
             
     def test_criteria_matching_logic(self):
         """EligibilityCriteria must support patient matching logic."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         criteria_data = {
             "criteria_id": "CRIT-MATCH-001",
@@ -208,7 +208,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_complexity_scoring(self):
         """EligibilityCriteria must assess complexity."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         # Simple criteria
         simple_criteria = EligibilityCriteria(
@@ -252,7 +252,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_semantic_similarity(self):
         """EligibilityCriteria must support semantic similarity."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         criteria_data = {
             "criteria_id": "CRIT-SIM-001",
@@ -277,7 +277,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_validation_rules(self):
         """EligibilityCriteria must validate business rules."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         # Should validate that criteria make medical sense
         valid_criteria = {
@@ -302,7 +302,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_localization_support(self):
         """EligibilityCriteria must support multiple languages/formats."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         criteria_data = {
             "criteria_id": "CRIT-LOCALE-001",
@@ -328,7 +328,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_audit_and_versioning(self):
         """EligibilityCriteria must support audit trail."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         criteria_data = {
             "criteria_id": "CRIT-AUDIT-001",
@@ -358,7 +358,7 @@ class TestEligibilityCriteriaModelContract:
         
     def test_criteria_serialization(self):
         """EligibilityCriteria must serialize/deserialize correctly."""
-        from backend.src.models.eligibility_criteria import EligibilityCriteria
+        from src.models.eligibility_criteria import EligibilityCriteria
         
         original_data = {
             "criteria_id": "CRIT-SERIAL-001",

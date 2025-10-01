@@ -16,7 +16,7 @@ class TestTrialModelContract:
     
     def test_trial_basic_information_validation(self):
         """Trial must validate basic trial information."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         valid_trial_data = {
             "nct_id": "NCT12345678",
@@ -50,7 +50,7 @@ class TestTrialModelContract:
         
     def test_trial_nct_id_validation(self):
         """NCT ID must follow ClinicalTrials.gov format."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         base_data = {
             "title": "Test Study",
@@ -86,7 +86,7 @@ class TestTrialModelContract:
                 
     def test_trial_status_validation(self):
         """Trial status must be from valid ClinicalTrials.gov options."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         base_data = {
             "nct_id": "NCT12345678",
@@ -116,7 +116,7 @@ class TestTrialModelContract:
             
     def test_trial_phase_validation(self):
         """Trial phase must be from valid options."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         base_data = {
             "nct_id": "NCT12345678",
@@ -144,7 +144,7 @@ class TestTrialModelContract:
             
     def test_trial_eligibility_criteria_structure(self):
         """Eligibility criteria must have proper structure."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         base_data = {
             "nct_id": "NCT12345678",
@@ -178,7 +178,7 @@ class TestTrialModelContract:
         
     def test_trial_vector_embedding_support(self):
         """Trial must support vector embeddings for semantic search."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -206,7 +206,7 @@ class TestTrialModelContract:
         
     def test_trial_embedding_vector_format(self):
         """Trial embedding must be proper vector format."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -230,7 +230,7 @@ class TestTrialModelContract:
         
     def test_trial_search_compatibility(self):
         """Trial must be compatible with hybrid search engine."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -260,7 +260,7 @@ class TestTrialModelContract:
         
     def test_trial_eligibility_matching_data(self):
         """Trial must provide data for eligibility matching."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -291,7 +291,7 @@ class TestTrialModelContract:
         
     def test_trial_location_and_contact_info(self):
         """Trial must handle location and contact information."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -328,7 +328,7 @@ class TestTrialModelContract:
         
     def test_trial_enrollment_and_timeline(self):
         """Trial must track enrollment and timeline information."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -352,7 +352,7 @@ class TestTrialModelContract:
         
     def test_trial_primary_outcome_measures(self):
         """Trial must track primary outcome measures."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         trial_data = {
             "nct_id": "NCT12345678",
@@ -382,7 +382,7 @@ class TestTrialModelContract:
         
     def test_trial_serialization_with_embeddings(self):
         """Trial must serialize/deserialize including embeddings."""
-        from backend.src.models.trial import Trial
+        from src.models.trial import Trial
         
         original_data = {
             "nct_id": "NCT12345678",

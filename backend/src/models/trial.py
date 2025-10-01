@@ -53,8 +53,8 @@ class TrialDB(Base):
     primary_completion_date = Column(String(20), nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_fetched = Column(DateTime, nullable=True)
 
 
@@ -96,8 +96,8 @@ class Trial(BaseModel):
     embedding_model: Optional[str] = Field(None, description="Model used for embedding generation")
     
     # Metadata
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Record creation time")
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Last update time")
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), description="Record creation time")
+    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), description="Last update time")
     last_fetched: Optional[datetime] = Field(None, description="Last data fetch from ClinicalTrials.gov")
     
     model_config = ConfigDict(

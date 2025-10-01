@@ -50,7 +50,8 @@ def test_metrics_endpoint():
 
 def test_cors_headers():
     """Test CORS headers are present."""
-    response = client.get("/api/v1/health/")
+    # Include Origin header to trigger CORS
+    response = client.get("/api/v1/health/", headers={"Origin": "http://localhost:3000"})
     # CORS headers should be present
     assert "access-control-allow-origin" in response.headers
 
