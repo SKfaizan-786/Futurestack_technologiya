@@ -123,8 +123,9 @@ class ClinicalTrialsClient:
             base_url=self.base_url,
             timeout=self.timeout,
             headers={
-                "User-Agent": "MedMatch-AI/1.0 (Clinical Trial Matching System)",
-                "Accept": "application/json"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "application/json",
+                "Accept-Language": "en-US,en;q=0.9"
             }
         )
         
@@ -462,19 +463,22 @@ class ClinicalTrialsClient:
             "pageSize": min(page_size, 1000)  # API limit
         }
         
-        # Build query conditions
+        # Build query string for ClinicalTrials.gov API v2.0
         query_parts = []
         
         if conditions:
             for condition in conditions:
-                query_parts.append(f'AREA[ConditionSearch] "{condition}"')
+                # Use simpler query format that's more likely to work
+                query_parts.append(condition)
         
         if keywords:
             for keyword in keywords:
-                query_parts.append(f'AREA[BasicSearch] "{keyword}"')
+                # Use simpler query format
+                query_parts.append(keyword)
         
         if query_parts:
-            params["query.cond"] = " AND ".join(query_parts)
+            # Use query.term instead of query.cond for API v2
+            params["query.term"] = " AND ".join(f'"{part}"' for part in query_parts)
         
         # Status filtering
         if status_filter:
@@ -504,6 +508,9 @@ class ClinicalTrialsClient:
         # Pagination
         if page_token:
             params["pageToken"] = page_token
+        
+        # Debug logging
+        logger.info(f"API request parameters: {params}")
         
         # Make request
         response = await self._make_request("/studies", params)

@@ -515,7 +515,7 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
         recommendations = self._extract_recommendations(content)
         
         return MedicalReasoningResult(
-            reasoning_steps=reasoning_chain,
+            reasoning_steps=[step.model_dump() for step in reasoning_chain],  # Convert to dictionaries
             eligibility_status=eligibility_status,
             confidence_score=confidence_score,
             eligibility_summary={
@@ -594,12 +594,11 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
                     section_content = content[start_idx:end_idx]
                     
                     step = ReasoningStep(
-                        step_number=i,
-                        category=section,
-                        description=section_content[:100] + "..." if len(section_content) > 100 else section_content,
-                        evidence=[],
+                        step=f"step_{i}",
+                        analysis=section_content[:100] + "..." if len(section_content) > 100 else section_content,
+                        conclusion=f"Assessment for {section}",
                         confidence=0.7,
-                        medical_justification=""
+                        evidence=[]
                     )
                     steps.append(step)
                     
@@ -849,7 +848,7 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
         ]
         
         return MedicalReasoningResult(
-            reasoning_steps=reasoning_steps,
+            reasoning_steps=[step.model_dump() for step in reasoning_steps],  # Convert to dictionaries
             eligibility_status="eligible",  # Based on 85% confidence
             confidence_score=0.85,
             eligibility_summary={

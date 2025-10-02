@@ -13,6 +13,7 @@ import { Dashboard } from './pages/Dashboard';
 import { TrialSearch } from './pages/TrialSearch';
 import { Results } from './pages/Results';
 import { SavedTrials } from './pages/SavedTrials';
+import { Profile } from './pages/Profile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,7 @@ function App() {
                   <Route path="/search" element={<TrialSearch />} />
                   <Route path="/results" element={<Results />} />
                   <Route path="/saved" element={<SavedTrials />} />
+                  <Route path="/profile" element={<Profile />} />
                 </Route>
 
                 {/* Fallback */}

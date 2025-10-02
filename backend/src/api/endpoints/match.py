@@ -13,6 +13,7 @@ from ...services.matching_service import MatchingService
 from ...integrations.trials_api_client import ClinicalTrialsClient
 from ...utils.logging import get_logger
 from ...utils.validation import validate_patient_data, sanitize_input
+from ...utils.auth import get_current_user, User
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -133,7 +134,8 @@ class MatchResponse(BaseModel):
 )
 async def match_patient_to_trials(
     request: MatchRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    current_user: Optional[User] = Depends(lambda: None)  # Make auth optional for testing
 ) -> MatchResponse:
     """
     Match a patient to clinical trials using award-winning AI reasoning.
@@ -298,3 +300,20 @@ async def match_health_check():
             status_code=503,
             detail="Matching service is currently unavailable"
         )
+
+
+@router.post(
+    "/test-cors",
+    summary="Test CORS Configuration",
+    description="Simple endpoint to test CORS functionality without authentication",
+    tags=["Testing"]
+)
+async def test_cors_endpoint(request: dict):
+    """
+    Test endpoint for CORS verification - no authentication required.
+    """
+    return {
+        "message": "CORS test successful",
+        "received_data": request,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }

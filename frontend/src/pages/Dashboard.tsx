@@ -76,29 +76,47 @@ export function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {searchHistory.slice(0, 5).map((search) => (
-                <div
-                  key={search.id}
-                  className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {search.patient_data.diagnosis.cancerType} - Stage {search.patient_data.diagnosis.stage}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(search.created_at).toLocaleDateString()} • {search.search_results.length} matches found
-                      </p>
+              {searchHistory.slice(0, 5).map((search) => {
+                // Safely extract search information
+                const patientData = search.patient_data;
+                const diagnosis = patientData?.diagnosis;
+                const medicalHistory = (patientData as any)?.medical_history;
+                
+                // Create display text from available data
+                let displayText = 'Medical Search';
+                if (diagnosis?.cancerType) {
+                  displayText = `${diagnosis.cancerType}${diagnosis.stage ? ` - Stage ${diagnosis.stage}` : ''}`;
+                } else if (medicalHistory) {
+                  // For natural language searches, show first 50 characters
+                  displayText = medicalHistory.length > 50 
+                    ? `${medicalHistory.substring(0, 50)}...` 
+                    : medicalHistory;
+                }
+                
+                return (
+                  <div
+                    key={search.id}
+                    className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {displayText}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(search.created_at).toLocaleDateString()} • {search.search_results.length} matches found
+                        </p>
+                      </div>
+                      <Link
+                        to={`/history/${search.id}`}
+                        className="text-sm text-primary-blue hover:underline"
+                      >
+                        View Results
+                      </Link>
                     </div>
-                    <Link
-                      to={`/history/${search.id}`}
-                      className="text-sm text-primary-blue hover:underline"
-                    >
-                      View Results
-                    </Link>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

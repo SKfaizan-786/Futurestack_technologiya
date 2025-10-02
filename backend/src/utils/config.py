@@ -43,11 +43,11 @@ class Settings(BaseSettings):
     # ClinicalTrials.gov API
     clinicaltrials_base_url: str = Field(
         default="https://clinicaltrials.gov/api/v2",
-        env="CLINICALTRIALS_BASE_URL"
+        alias="CLINICALTRIALS_BASE_URL"
     )
     clinicaltrials_rate_limit: int = Field(
         default=100,  # requests per minute
-        env="CLINICALTRIALS_RATE_LIMIT"
+        alias="CLINICALTRIALS_RATE_LIMIT"
     )
     
     # Redis Cache
@@ -61,8 +61,14 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"],
-        env="CORS_ORIGINS"
+        default=[
+            "http://localhost:3000", 
+            "http://localhost:8080", 
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://localhost:5173"
+        ],
+        alias="CORS_ORIGINS"
     )
     
     # Logging
@@ -73,7 +79,7 @@ class Settings(BaseSettings):
     spacy_model: str = Field(default="en_core_web_sm", alias="SPACY_MODEL")
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
-        env="EMBEDDING_MODEL"
+        alias="EMBEDDING_MODEL"
     )
     vector_dimension: int = 384
     similarity_threshold: float = 0.7
@@ -85,6 +91,11 @@ class Settings(BaseSettings):
     # HIPAA Compliance
     hipaa_safe_logging: bool = Field(default=True, alias="HIPAA_SAFE_LOGGING")
     data_retention_days: int = Field(default=90, alias="DATA_RETENTION_DAYS")
+    
+    # Supabase Authentication
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY") 
+    supabase_jwt_secret: str = Field(default="", alias="SUPABASE_JWT_SECRET")
     
     model_config = ConfigDict(
         env_file=".env",

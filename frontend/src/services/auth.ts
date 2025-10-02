@@ -10,6 +10,7 @@ export const authService = {
       options: {
         data: {
           full_name: fullName,
+          fullName: fullName, // Backup field name
           role,
         },
       },
@@ -17,18 +18,10 @@ export const authService = {
 
     if (error) throw error;
 
-    // Create user profile
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-          role,
-        });
-
-      if (profileError) throw profileError;
-    }
+    // Profile will be created automatically by database trigger
+    // No need to manually insert into user_profiles table
+    
+    return data;
 
     return data;
   },

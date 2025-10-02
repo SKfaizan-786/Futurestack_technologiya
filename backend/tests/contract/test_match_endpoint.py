@@ -3,15 +3,11 @@ Contract tests for the trial matching endpoint.
 Tests POST /api/v1/match functionality.
 """
 import pytest
-from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from src.api.main import app
 from src.api.endpoints.match import MatchRequest, PatientData
 from src.models.patient import Patient
 from src.models.match_result import MatchResult
-
-client = TestClient(app)
 
 @pytest.fixture
 def sample_patient_data():
@@ -31,7 +27,7 @@ def sample_patient_data():
         }
     }
 
-def test_match_endpoint_successful_response(sample_patient_data):
+def test_match_endpoint_successful_response(client, sample_patient_data):
     """Test successful trial matching with valid patient data."""
     request_data = MatchRequest(
         patient_data=PatientData(**sample_patient_data),
@@ -54,7 +50,7 @@ def test_match_endpoint_successful_response(sample_patient_data):
         assert "reasoning" in match
         assert isinstance(match["reasoning"], dict)  # Reasoning is now a structured dict
         
-def test_match_endpoint_invalid_patient_data():
+def test_match_endpoint_invalid_patient_data(client):
     """Test error handling for invalid patient data."""
     invalid_data = {
         "patient_data": {},  # Empty patient data
@@ -64,7 +60,7 @@ def test_match_endpoint_invalid_patient_data():
     response = client.post("/api/v1/match", json=invalid_data)
     assert response.status_code == 422
     
-def test_match_endpoint_invalid_params(sample_patient_data):
+def test_match_endpoint_invalid_request_params(client, sample_patient_data):
     """Test validation of request parameters."""
     patient_data = PatientData(**sample_patient_data)
     invalid_params = {
@@ -76,7 +72,7 @@ def test_match_endpoint_invalid_params(sample_patient_data):
     response = client.post("/api/v1/match", json=invalid_params)
     assert response.status_code == 422
 
-def test_match_endpoint_no_matches():
+def test_match_endpoint_no_matches(client):
     """Test handling of no matching trials found."""
     patient_data = PatientData(
         medical_history="Healthy individual with no conditions",
@@ -99,7 +95,7 @@ def test_match_endpoint_no_matches():
     assert data["matches"] == []
     assert "message" in data
 
-def test_match_endpoint_performance(sample_patient_data):
+def test_match_endpoint_performance_metadata(client, sample_patient_data):
     """Test response time meets performance requirements."""
     import time
     
@@ -115,7 +111,7 @@ def test_match_endpoint_performance(sample_patient_data):
     assert response.status_code == 200
     assert (end_time - start_time) < 1.0  # Ensure response within 1000ms
 
-def test_llama_3_3_70b_reasoning_chain(sample_patient_data):
+def test_llama_3_3_70b_reasoning_chain(client, sample_patient_data):
     """Test that Llama 3.3-70B provides detailed medical reasoning chains."""
     patient_data = PatientData(**sample_patient_data)
     request_data = MatchRequest(
@@ -142,7 +138,7 @@ def test_llama_3_3_70b_reasoning_chain(sample_patient_data):
         assert any("cancer" in step.lower() for step in cot)
         assert any("eligibility" in step.lower() for step in cot)
 
-def test_cerebras_api_integration():
+def test_cerebras_api_integration(client):
     """Test integration with Cerebras API for award-winning performance."""
     patient_data = PatientData(
         medical_history="67-year-old male with metastatic lung cancer, EGFR mutation positive",
@@ -168,7 +164,7 @@ def test_cerebras_api_integration():
     # Should be fast due to Cerebras optimization
     assert metadata["inference_time_ms"] < 500
 
-def test_medical_entity_extraction_with_llm():
+def test_medical_entity_extraction_with_llm(client):
     """Test advanced medical entity extraction using Llama 3.3-70B."""
     patient_data = PatientData(
         clinical_notes="""

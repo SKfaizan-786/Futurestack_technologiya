@@ -6,12 +6,37 @@ import asyncio
 from typing import Generator
 import os
 from pathlib import Path
+from fastapi.testclient import TestClient
 
 # Set test environment
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["CEREBRAS_API_KEY"] = "test-key"
 os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
+
+# Import after setting environment variables
+from src.api.main import app
+from src.utils.auth import get_current_user, User
+
+
+def override_get_current_user():
+    """Override authentication for testing."""
+    return User(
+        id="test-user-123",
+        email="test@example.com",
+        role="patient",
+        full_name="Test User"
+    )
+
+
+# Override the dependency for testing
+app.dependency_overrides[get_current_user] = override_get_current_user
+
+
+@pytest.fixture
+def client():
+    """Test client with authentication disabled."""
+    return TestClient(app)
 
 
 @pytest.fixture(scope="session")

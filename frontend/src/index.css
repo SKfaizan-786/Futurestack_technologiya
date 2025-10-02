@@ -7,3 +7,262 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Fix button visibility and hover issues */
+button, .btn, a[class*="bg-primary"], a[class*="bg-blue"], a[class*="px-"], 
+Link[class*="bg-"], Link[class*="px-"] {
+  cursor: pointer !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: all 0.2s ease-in-out !important;
+  display: inline-block !important;
+}
+
+button:hover, .btn:hover, a[class*="bg-primary"]:hover, a[class*="bg-blue"]:hover,
+a[class*="px-"]:hover, Link[class*="bg-"]:hover {
+  cursor: pointer !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure all button text is visible */
+button *, .btn *, a[class*="bg-"] *, a[class*="px-"] * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: inherit !important;
+}
+
+/* Fix specific primary button styles */
+.bg-primary-blue, a.bg-primary-blue, button.bg-primary-blue {
+  background-color: #4A90E2 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.bg-primary-blue:hover, a.bg-primary-blue:hover, button.bg-primary-blue:hover {
+  background-color: #357ABD !important;
+  color: white !important;
+}
+
+/* Ensure text contrast */
+.text-white {
+  color: white !important;
+}
+
+.text-primary-blue {
+  color: #4A90E2 !important;
+}
+
+/* Fix link buttons */
+a[class*="px-"]:hover {
+  text-decoration: none !important;
+}
+
+/* Fix form buttons specifically */
+button[type="submit"], input[type="submit"] {
+  background-color: #4A90E2 !important;
+  color: white !important;
+  cursor: pointer !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+button[type="submit"]:hover, input[type="submit"]:hover {
+  background-color: #357ABD !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Fix disabled state */
+button:disabled, input:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Fix specific Landing page buttons */
+a[href="/signup"], a[href="/login"] {
+  display: inline-block !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+/* Fix icon visibility in feature boxes and cards */
+.w-12.h-12 svg, .w-6.h-6, .w-8.h-8, svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Fix specific icon containers in landing page and dashboard */
+.w-12.h-12.bg-primary-blue.bg-opacity-10,
+.w-12.h-12.bg-secondary-green.bg-opacity-10,
+.w-12.h-12.bg-primary-teal.bg-opacity-10 {
+  background-color: rgba(74, 144, 226, 0.15) !important; /* Slightly higher opacity for contrast */
+  border-radius: 0.5rem; /* Softer corners */
+  padding: 0.25rem; /* Padding for icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.w-12.h-12.bg-primary-blue.bg-opacity-10:hover {
+  background-color: rgba(74, 144, 226, 0.25) !important; /* Hover effect */
+}
+
+.w-12.h-12.bg-secondary-green.bg-opacity-10 {
+  background-color: rgba(136, 212, 152, 0.15) !important;
+}
+
+.w-12.h-12.bg-secondary-green.bg-opacity-10:hover {
+  background-color: rgba(136, 212, 152, 0.25) !important;
+}
+
+.w-12.h-12.bg-primary-teal.bg-opacity-10 {
+  background-color: rgba(58, 175, 169, 0.15) !important;
+}
+
+.w-12.h-12.bg-primary-teal.bg-opacity-10:hover {
+  background-color: rgba(58, 175, 169, 0.25) !important;
+}
+
+/* Increase icon size and refine styling */
+.w-12.h-12 .w-6.h-6,
+.w-12.h-12 svg {
+  width: 2rem !important; /* 32px */
+  height: 2rem !important;
+  color: #4A90E2 !important;
+  fill: none !important;
+  stroke: #4A90E2 !important;
+  stroke-width: 2.5 !important; /* Bolder stroke */
+  transition: stroke 0.3s ease, transform 0.3s ease;
+}
+
+.w-12.h-12.bg-primary-blue.bg-opacity-10:hover .w-6.h-6,
+.w-12.h-12.bg-primary-blue.bg-opacity-10:hover svg {
+  stroke: #357ABD !important; /* Darker blue on hover */
+  transform: scale(1.1); /* Slight scale-up */
+}
+
+.w-12.h-12.bg-secondary-green.bg-opacity-10 .w-6.h-6,
+.w-12.h-12.bg-secondary-green.bg-opacity-10 svg {
+  color: #88D498 !important;
+  stroke: #88D498 !important;
+}
+
+.w-12.h-12.bg-secondary-green.bg-opacity-10:hover .w-6.h-6,
+.w-12.h-12.bg-secondary-green.bg-opacity-10:hover svg {
+  stroke: #6ABF7A !important; /* Darker green */
+  transform: scale(1.1);
+}
+
+.w-12.h-12.bg-primary-teal.bg-opacity-10 .w-6.h-6,
+.w-12.h-12.bg-primary-teal.bg-opacity-10 svg {
+  color: #3AAFA9 !important;
+  stroke: #3AAFA9 !important;
+}
+
+.w-12.h-12.bg-primary-teal.bg-opacity-10:hover .w-6.h-6,
+.w-12.h-12.bg-primary-teal.bg-opacity-10:hover svg {
+  stroke: #2D8C87 !important; /* Darker teal */
+  transform: scale(1.1);
+}
+
+/* Fix Profile page icon visibility */
+.w-16.h-16.bg-primary-blue.bg-opacity-10 {
+  background-color: rgba(74, 144, 226, 0.1) !important;
+}
+
+.w-16.h-16 svg,
+.w-16.h-16 .w-8.h-8 {
+  color: #4A90E2 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  margin: auto !important;
+  fill: none !important;
+  stroke: #4A90E2 !important;
+  stroke-width: 2 !important;
+}
+
+/* Fix icon containers */
+.bg-opacity-10, .bg-primary-blue.bg-opacity-10, .bg-secondary-green.bg-opacity-10, 
+.bg-primary-teal.bg-opacity-10 {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure icons are always visible */
+svg, .lucide {
+  opacity: 1 !important;
+  visibility: visible !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Specific fix for Lucide icons (Zap, Search, Shield, User) */
+svg.lucide,
+.lucide-zap,
+.lucide-search, 
+.lucide-shield,
+.lucide-user {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Force all SVG icons to be visible */
+svg[data-lucide],
+[data-lucide] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix navbar button alignment - make items inline */
+nav .flex.items-center.space-x-1, 
+button.flex.items-center.space-x-1,
+a.flex.items-center.space-x-1 {
+  display: flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  flex-direction: row !important;
+  gap: 4px !important;
+}
+
+/* Prevent text wrapping in navigation buttons */
+nav button, nav a {
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Fix navbar spacing */
+nav .flex.items-center.space-x-6 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Ensure navbar items don't break */
+header nav {
+  min-width: fit-content !important;
+}
+
+/* Fix specific Sign Out button */
+button.flex.items-center.space-x-1 {
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s !important;
+}
+
+button.flex.items-center.space-x-1:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}

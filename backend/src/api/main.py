@@ -115,11 +115,18 @@ def create_app() -> FastAPI:
     )
     
     # Configure CORS middleware
+    cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "https://localhost:5173"
+    ]
+    logger.info("Configuring CORS", cors_origins=cors_origins)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=["*"],
         expose_headers=["X-Request-ID", "X-Response-Time"]
     )

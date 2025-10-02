@@ -4,7 +4,7 @@ import { Heart, Search, Shield, Zap } from 'lucide-react';
 export function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Hero Section */}
+      {/* Hero Section (unchanged) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         <div className="text-center">
           <div className="flex justify-center mb-6">
@@ -42,7 +42,7 @@ export function Landing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <div className="w-12 h-12 bg-primary-blue bg-opacity-10 rounded-lg flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-primary-blue" />
+              <Zap className="w-6 h-6 text-primary-blue" /> {/* Unchanged size but will scale with CSS */}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">AI-Powered Matching</h3>
             <p className="text-gray-600">
@@ -72,7 +72,7 @@ export function Landing() {
         </div>
       </div>
 
-      {/* How It Works Section */}
+      {/* How It Works Section (unchanged) */}
       <div className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
@@ -88,7 +88,6 @@ export function Landing() {
                 Describe the patient's condition, treatment history, and location in your own words or using our guided form.
               </p>
             </div>
-
             <div className="text-center">
               <div className="w-16 h-16 bg-primary-blue text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                 2
@@ -98,9 +97,8 @@ export function Landing() {
                 Our AI instantly analyzes thousands of clinical trials and ranks them by compatibility with your criteria.
               </p>
             </div>
-
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary-blue text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary-blue text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                 3
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect with Trials</h3>
@@ -112,7 +110,7 @@ export function Landing() {
         </div>
       </div>
 
-      {/* CTA Section */}
+      {/* CTA Section (unchanged) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="bg-primary-blue rounded-2xl p-12 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
