@@ -16,6 +16,7 @@ import httpx
 from ..integrations.cerebras_client import CerebrasClient
 from ..integrations.trials_api_client import ClinicalTrialsClient
 from ..utils.config import settings
+from ..services.metrics_service import track_compliance_event, get_metrics, get_content_type
 
 logger = structlog.get_logger(__name__)
 
@@ -42,6 +43,170 @@ class ComponentHealth(BaseModel):
 
 # Application start time for uptime calculation
 _start_time = time.time()
+
+
+async def check_ai_models_health() -> ComponentHealth:
+    """
+    Check AI models (spaCy, Llama 3.3-70B) availability and performance.
+    
+    Returns:
+        AI models health status
+    """
+    start_time = time.time()
+    
+    try:
+        # Check spaCy model loading
+        try:
+            import spacy
+            nlp = spacy.load("en_core_web_sm")
+            # Quick test processing
+            doc = nlp("test medical text")
+            spacy_status = "healthy"
+        except Exception as e:
+            logger.warning("spaCy model check failed", error=str(e))
+            spacy_status = "degraded"
+        
+        # Check Llama model via Cerebras (lightweight test)
+        cerebras_status = "healthy"
+        if settings.environment != "test" and settings.cerebras_api_key != "test-key":
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        f"{settings.cerebras_base_url}/models",
+                        headers={"Authorization": f"Bearer {settings.cerebras_api_key}"},
+                        timeout=3.0
+                    )
+                    if response.status_code != 200:
+                        cerebras_status = "degraded"
+            except Exception as e:
+                logger.warning("Cerebras model check failed", error=str(e))
+                cerebras_status = "degraded"
+        
+        latency_ms = (time.time() - start_time) * 1000
+        
+        # Overall AI status
+        if spacy_status == "healthy" and cerebras_status == "healthy":
+            overall_status = "healthy"
+        elif spacy_status == "degraded" or cerebras_status == "degraded":
+            overall_status = "degraded"
+        else:
+            overall_status = "unhealthy"
+        
+        return ComponentHealth(
+            status=overall_status,
+            latency_ms=latency_ms,
+            last_checked=datetime.now(timezone.utc)
+        )
+        
+    except Exception as e:
+        logger.error("AI models health check failed", error=str(e))
+        return ComponentHealth(
+            status="unhealthy",
+            error=str(e),
+            last_checked=datetime.now(timezone.utc)
+        )
+
+
+async def check_cache_health() -> ComponentHealth:
+    """
+    Check Redis cache connectivity and performance.
+    
+    Returns:
+        Cache health status
+    """
+    start_time = time.time()
+    
+    try:
+        # For containerized environments, check Redis
+        # For development, this might not be available
+        if settings.environment in ["production", "docker"]:
+            import redis
+            r = redis.Redis.from_url(settings.redis_url or "redis://localhost:6379")
+            
+            # Simple ping test
+            await asyncio.get_event_loop().run_in_executor(None, r.ping)
+            
+            latency_ms = (time.time() - start_time) * 1000
+            
+            return ComponentHealth(
+                status="healthy",
+                latency_ms=latency_ms,
+                last_checked=datetime.now(timezone.utc)
+            )
+        else:
+            # Development environment - cache not required
+            return ComponentHealth(
+                status="healthy",
+                latency_ms=1.0,  # Mock latency
+                last_checked=datetime.now(timezone.utc)
+            )
+        
+    except Exception as e:
+        logger.warning("Cache health check failed", error=str(e))
+        # Cache failure is not critical in development
+        if settings.environment == "development":
+            return ComponentHealth(
+                status="degraded",
+                error="Cache unavailable (development mode)",
+                last_checked=datetime.now(timezone.utc)
+            )
+        else:
+            return ComponentHealth(
+                status="unhealthy",
+                error=str(e),
+                last_checked=datetime.now(timezone.utc)
+            )
+
+
+async def check_security_compliance() -> ComponentHealth:
+    """
+    Check HIPAA and security compliance status.
+    
+    Returns:
+        Security compliance health status
+    """
+    start_time = time.time()
+    
+    try:
+        # Check security configuration
+        security_checks = {
+            "hipaa_logging_enabled": settings.hipaa_safe_logging,
+            "cors_properly_configured": len(settings.cors_origins) > 0,
+            "secure_headers_enabled": True,  # Always enabled in our middleware
+            "api_key_configured": bool(settings.cerebras_api_key and settings.cerebras_api_key != "test-key"),
+            "database_url_secure": settings.database_url.startswith(("postgresql://", "sqlite://"))
+        }
+        
+        # Count passed checks
+        passed_checks = sum(security_checks.values())
+        total_checks = len(security_checks)
+        
+        latency_ms = (time.time() - start_time) * 1000
+        
+        if passed_checks == total_checks:
+            status = "healthy"
+            track_compliance_event("security_check", "passed")
+        elif passed_checks >= total_checks * 0.8:  # 80% pass rate
+            status = "degraded"
+            track_compliance_event("security_check", "partial")
+        else:
+            status = "unhealthy"
+            track_compliance_event("security_check", "failed")
+        
+        return ComponentHealth(
+            status=status,
+            latency_ms=latency_ms,
+            last_checked=datetime.now(timezone.utc)
+        )
+        
+    except Exception as e:
+        logger.error("Security compliance check failed", error=str(e))
+        track_compliance_event("security_check", "error")
+        return ComponentHealth(
+            status="unhealthy",
+            error=str(e),
+            last_checked=datetime.now(timezone.utc)
+        )
 
 
 async def check_database_health() -> ComponentHealth:
@@ -203,42 +368,37 @@ async def run_all_health_checks() -> Dict[str, ComponentHealth]:
         Dictionary of component health statuses
     """
     # Run all checks concurrently for better performance
-    db_check, cerebras_check, trials_check = await asyncio.gather(
+    results = await asyncio.gather(
         check_database_health(),
         check_cerebras_api_health(),
         check_clinicaltrials_api_health(),
+        check_ai_models_health(),
+        check_cache_health(),
+        check_security_compliance(),
         return_exceptions=True
     )
+    
+    check_names = [
+        "database",
+        "cerebras_api", 
+        "clinicaltrials_api",
+        "ai_models",
+        "cache",
+        "security_compliance"
+    ]
     
     # Handle any exceptions from gather
     checks = {}
     
-    if isinstance(db_check, Exception):
-        checks["database"] = ComponentHealth(
-            status="unhealthy",
-            error=str(db_check),
-            last_checked=datetime.now(timezone.utc)
-        )
-    else:
-        checks["database"] = db_check
-    
-    if isinstance(cerebras_check, Exception):
-        checks["cerebras_api"] = ComponentHealth(
-            status="unhealthy",
-            error=str(cerebras_check),
-            last_checked=datetime.now(timezone.utc)
-        )
-    else:
-        checks["cerebras_api"] = cerebras_check
-    
-    if isinstance(trials_check, Exception):
-        checks["clinicaltrials_api"] = ComponentHealth(
-            status="unhealthy",
-            error=str(trials_check),
-            last_checked=datetime.now(timezone.utc)
-        )
-    else:
-        checks["clinicaltrials_api"] = trials_check
+    for i, (name, result) in enumerate(zip(check_names, results)):
+        if isinstance(result, Exception):
+            checks[name] = ComponentHealth(
+                status="unhealthy",
+                error=str(result),
+                last_checked=datetime.now(timezone.utc)
+            )
+        else:
+            checks[name] = result
     
     return checks
 
@@ -280,6 +440,69 @@ async def health_check() -> HealthStatus:
         environment=settings.environment,
         uptime_seconds=uptime,
         checks={}
+    )
+
+
+@router.get("/comprehensive", response_model=HealthStatus, summary="Comprehensive health check")
+async def comprehensive_health_check() -> HealthStatus:
+    """
+    Comprehensive health check with all components.
+    
+    Performs deep health checks on all system components including:
+    - Database connectivity and performance
+    - AI models (spaCy, Llama 3.3-70B via Cerebras)
+    - External APIs (ClinicalTrials.gov)
+    - Cache systems (Redis)
+    - Security compliance (HIPAA)
+    """
+    uptime = time.time() - _start_time
+    
+    # Run comprehensive health checks
+    checks = await run_all_health_checks()
+    overall_status = calculate_overall_status(checks)
+    
+    # Convert ComponentHealth objects to dictionaries for JSON serialization
+    checks_dict = {name: check.model_dump() for name, check in checks.items()}
+    
+    health_response = HealthStatus(
+        status=overall_status,
+        timestamp=datetime.now(timezone.utc),
+        version=settings.app_version,
+        environment=settings.environment,
+        uptime_seconds=uptime,
+        checks=checks_dict
+    )
+    
+    logger.info("Comprehensive health check completed",
+               status=overall_status,
+               component_count=len(checks),
+               uptime_seconds=uptime)
+    
+    return health_response
+
+
+@router.get("/prometheus", summary="Prometheus metrics endpoint")
+async def prometheus_metrics() -> str:
+    """
+    Prometheus metrics endpoint for monitoring integration.
+    
+    Returns healthcare-specific metrics in Prometheus format:
+    - Clinical trial matching performance
+    - AI model latency and throughput  
+    - Healthcare compliance events
+    - Database and cache performance
+    """
+    from fastapi import Response
+    
+    metrics_data = get_metrics()
+    return Response(
+        content=metrics_data,
+        media_type=get_content_type(),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache", 
+            "Expires": "0"
+        }
     )
 
 

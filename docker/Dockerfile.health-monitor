@@ -1,0 +1,33 @@
+# ================================
+# MedMatch AI Health Monitor Dockerfile
+# Creative Docker MCP Gateway service for system health monitoring
+# ================================
+
+FROM alpine:latest
+
+# Install monitoring tools
+RUN apk add --no-cache \
+    curl \
+    postgresql-client \
+    redis \
+    jq \
+    bash \
+    python3 \
+    py3-pip
+
+# Install Python monitoring libraries
+RUN pip3 install requests psycopg2-binary redis prometheus_client
+
+# Create monitoring script
+COPY health-monitor.py /usr/local/bin/health-monitor.py
+RUN chmod +x /usr/local/bin/health-monitor.py
+
+# Create health check wrapper
+RUN cat > /usr/local/bin/health-check.sh << 'EOF'
+#!/bin/bash
+python3 /usr/local/bin/health-monitor.py
+EOF
+
+RUN chmod +x /usr/local/bin/health-check.sh
+
+CMD ["/usr/local/bin/health-check.sh"]

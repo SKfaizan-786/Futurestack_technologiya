@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: medmatch-backend-service
+  labels:
+    app: medmatch-backend
+spec:
+  selector:
+    app: medmatch-backend
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medmatch-frontend-service
+  labels:
+    app: medmatch-frontend
+spec:
+  selector:
+    app: medmatch-frontend
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medmatch-config
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  CORS_ORIGINS: "https://medmatch.ai,https://www.medmatch.ai"
+  REACT_APP_ENVIRONMENT: "production"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: medmatch-secrets
+type: Opaque
+stringData:
+  database-url: "postgresql://medmatch:CHANGE_ME_PRODUCTION_PASSWORD@postgres-service:5432/medmatch"
+  redis-url: "redis://:CHANGE_ME_REDIS_PASSWORD@redis-service:6379"
+  postgres-password: "CHANGE_ME_PRODUCTION_PASSWORD"
+  redis-password: "CHANGE_ME_REDIS_PASSWORD"
+  cerebras-api-key: "CHANGE_ME_CEREBRAS_API_KEY"
+  secret-key: "CHANGE_ME_SECRET_KEY_FOR_JWT"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard

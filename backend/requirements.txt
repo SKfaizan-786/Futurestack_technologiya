@@ -24,3 +24,11 @@ alembic
 structlog
 pytest-asyncio
 pytrials
+
+# Medical NLP and AI Models
+spacy>=3.8.0
+
+# Docker Health Monitor Dependencies
+psycopg2-binary>=2.9.7
+redis>=4.5.0
+prometheus-client>=0.17.0

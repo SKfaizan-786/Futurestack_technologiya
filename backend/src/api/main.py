@@ -23,6 +23,7 @@ from .endpoints.saved_trials import router as saved_trials_router
 from .middleware import ErrorHandlingMiddleware
 from ..models.base import init_database, db_manager
 from ..utils.logging import configure_logging
+from ..services.metrics_service import get_metrics, get_content_type
 
 # Initialize structured logging
 configure_logging()
@@ -249,6 +250,29 @@ def create_app() -> FastAPI:
     app.include_router(trials_router, prefix=f"{settings.api_prefix}", tags=["trials"])
     app.include_router(notifications_router, prefix=f"{settings.api_prefix}", tags=["notifications"])
     app.include_router(saved_trials_router, prefix=f"{settings.api_prefix}", tags=["saved_trials"])
+    
+    # Add Prometheus metrics endpoint for Docker MCP Gateway showcase
+    @app.get("/metrics", response_class=Response, tags=["monitoring"])
+    async def prometheus_metrics():
+        """
+        Prometheus metrics endpoint for healthcare monitoring.
+        
+        Returns metrics in Prometheus format for monitoring:
+        - Clinical trial matching performance
+        - AI model latency and throughput
+        - Healthcare compliance events
+        - Database and cache performance
+        """
+        metrics_data = get_metrics()
+        return Response(
+            content=metrics_data,
+            media_type=get_content_type(),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     
     logger.info("FastAPI application created", 
                title=app.title, version=app.version, environment=settings.environment)

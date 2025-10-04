@@ -1,0 +1,126 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medmatch-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://medmatch.ai,https://www.medmatch.ai"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - medmatch.ai
+    - www.medmatch.ai
+    - api.medmatch.ai
+    secretName: medmatch-tls
+  rules:
+  # Frontend routing
+  - host: medmatch.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: medmatch-frontend-service
+            port:
+              number: 3000
+  - host: www.medmatch.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: medmatch-frontend-service
+            port:
+              number: 3000
+  # Backend API routing
+  - host: api.medmatch.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: medmatch-backend-service
+            port:
+              number: 8000
+
+---
+# Alternative single-host setup for development/testing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medmatch-ingress-dev
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: your-domain.com  # Replace with your domain or LoadBalancer IP
+    http:
+      paths:
+      # Frontend routes
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: medmatch-frontend-service
+            port:
+              number: 3000
+      # API routes
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: medmatch-backend-service
+            port:
+              number: 8000
+
+---
+# LoadBalancer service for cloud providers (alternative to Ingress)
+apiVersion: v1
+kind: Service
+metadata:
+  name: medmatch-loadbalancer
+  labels:
+    app: medmatch
+spec:
+  type: LoadBalancer
+  ports:
+  - name: frontend
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: api
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: medmatch-frontend  # This would need to be adjusted for multi-service setup
+
+---
+# Certificate issuer for automatic HTTPS (requires cert-manager)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@domain.com  # Replace with your email
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

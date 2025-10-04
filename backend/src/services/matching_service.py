@@ -17,6 +17,12 @@ from ..services.hybrid_search import HybridSearchEngine
 from ..services.llm_reasoning import LLMReasoningService
 from ..integrations.trials_api_client import ClinicalTrialsClient
 from ..utils.config import get_settings
+from .metrics_service import (
+    track_trial_matching,
+    track_ai_model_request,
+    track_patient_search,
+    track_clinical_trials_api
+)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -144,6 +150,7 @@ class MatchingService:
         if hasattr(self.trials_client, 'close'):
             await self.trials_client.close()
 
+    @track_trial_matching("general")
     async def search_and_match_trials(
         self,
         patient_data: Dict[str, Any],
@@ -401,6 +408,12 @@ class MatchingService:
             keywords = []
             query_lower = query.lower()
             
+            # Track patient search
+            track_patient_search("trial_search", "patient")
+            
+            # Track ClinicalTrials.gov API call start time
+            api_start_time = time.time()
+            
             # Specific cancer types with mutation-specific keywords
             cancer_types = {
                 "breast cancer": ["breast cancer", "breast"],
@@ -469,6 +482,10 @@ class MatchingService:
                 page_size=max_results
             )
             
+            # Track ClinicalTrials.gov API call success
+            api_latency = time.time() - api_start_time
+            track_clinical_trials_api("search", "success", api_latency)
+            
             # If API search returned no valid trials, try broader search terms
             if not search_results.trials or len(search_results.trials) == 0:
                 logger.info(f"API search returned no valid trials, trying broader search for query: {query}")
@@ -482,10 +499,18 @@ class MatchingService:
                     keywords=broader_keywords,
                     page_size=max_results
                 )
+                
+                # Track broader search API call
+                broader_api_latency = time.time() - api_start_time
+                track_clinical_trials_api("search_broader", "success", broader_api_latency)
             
             return search_results.trials
             
         except Exception as e:
+            # Track API error
+            api_latency = time.time() - api_start_time
+            track_clinical_trials_api("search", "error", api_latency)
+            
             logger.error(f"Search failed: {str(e)}")
             # Return empty list instead of mock data - let the system handle no results gracefully
             return []

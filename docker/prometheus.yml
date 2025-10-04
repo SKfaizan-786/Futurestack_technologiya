@@ -1,0 +1,32 @@
+# Prometheus configuration for MedMatch AI monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # MedMatch Backend
+  - job_name: 'medmatch-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 10s
+
+  # Health Monitor
+  - job_name: 'medmatch-health-monitor'
+    static_configs:
+      - targets: ['health-monitor:8080']
+    scrape_interval: 10s
+
+  # Node exporter (if added)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']

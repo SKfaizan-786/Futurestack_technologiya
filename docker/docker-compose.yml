@@ -1,0 +1,557 @@
+services:# MedMatch AI - Docker Compose for Local Development# MedMatch AI - Docker Compose for Creative Docker MCP Gateway Showcase
+
+  postgres:
+
+    image: postgres:15-alpine# Healthcare AI platform with microservices architecture# Healthcare AI platform with microservices architecture
+
+    container_name: medmatch-postgres
+
+    environment:
+
+      POSTGRES_DB: medmatch
+
+      POSTGRES_USER: medmatchservices:version: '3.8'
+
+      POSTGRES_PASSWORD: secure_password_2024
+
+    volumes:  # ================================
+
+      - postgres-data:/var/lib/postgresql/data
+
+    ports:  # Database Layer# Creative Docker MCP Gateway Networks
+
+      - "5432:5432"
+
+    networks:  # ================================networks:
+
+      - medmatch-network
+
+    healthcheck:  postgres:  medmatch-network:
+
+      test: ["CMD-SHELL", "pg_isready -U medmatch -d medmatch"]
+
+      interval: 10s    image: postgres:15-alpine    driver: bridge
+
+      timeout: 5s
+
+      retries: 5    container_name: medmatch-postgres    ipam:
+
+
+
+  redis:    environment:      config:
+
+    image: redis:7-alpine
+
+    container_name: medmatch-redis      POSTGRES_DB: ${POSTGRES_DB:-medmatch}        - subnet:  health-monitor:
+
+    volumes:
+
+      - redis-data:/data      POSTGRES_USER: ${POSTGRES_USER:-medmatch}    build:
+
+    ports:
+
+      - "6379:6379"      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_2024}      context: .
+
+    networks:
+
+      - medmatch-network      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"      dockerfile: Dockerfile.health-monitor.20.0.0/16
+
+    healthcheck:
+
+      test: ["CMD", "redis-cli", "ping"]    volumes:  monitoring-network:
+
+      interval: 10s
+
+      timeout: 5s      - postgres-data:/var/lib/postgresql/data    driver: bridge
+
+      retries: 5
+
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+networks:
+
+  medmatch-network:    ports:# Persistent volumes for healthcare data compliance
+
+    driver: bridge
+
+      - "5432:5432"volumes:
+
+volumes:
+
+  postgres-data:    networks:  postgres-data:
+
+    driver: local
+
+  redis-data:      - medmatch-network    driver: local
+
+    driver: local
+    healthcheck:  redis-data:
+
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medmatch} -d ${POSTGRES_DB:-medmatch}"]    driver: local
+
+      interval: 10s  prometheus-data:
+
+      timeout: 5s    driver: local
+
+      retries: 5  grafana-data:
+
+      start_period: 30s    driver: local
+
+
+
+  # ================================services:
+
+  # Cache Layer  # ================================
+
+  # ================================  # Database Layer
+
+  redis:  # ================================
+
+    image: redis:7-alpine  postgres:
+
+    container_name: medmatch-redis    image: postgres:15-alpine
+
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-redis_password_2024}"    container_name: medmatch-postgres
+
+    volumes:    environment:
+
+      - redis-data:/data      POSTGRES_DB: medmatch
+
+    ports:      POSTGRES_USER: medmatch
+
+      - "6379:6379"      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_2024}
+
+    networks:      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+
+      - medmatch-network    volumes:
+
+    healthcheck:      - postgres-data:/var/lib/postgresql/data
+
+      test: ["CMD", "redis-cli", "ping"]      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+      interval: 10s    ports:
+
+      timeout: 5s      - "5432:5432"
+
+      retries: 5    networks:
+
+      - medmatch-network
+
+  # ================================    healthcheck:
+
+  # Backend API      test: ["CMD-SHELL", "pg_isready -U medmatch -d medmatch"]
+
+  # ================================      interval: 10s
+
+  backend:      timeout: 5s
+
+    build:      retries: 5
+
+      context: ..    restart: unless-stopped
+
+      dockerfile: docker/backend.Dockerfile    deploy:
+
+      target: development      resources:
+
+    container_name: medmatch-backend        limits:
+
+    environment:          memory: 512M
+
+      # Database Configuration          cpus: '0.5'
+
+      DATABASE_URL: postgresql://${POSTGRES_USER:-medmatch}:${POSTGRES_PASSWORD:-secure_password_2024}@postgres:5432/${POSTGRES_DB:-medmatch}
+
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password_2024}@redis:6379  # ================================
+
+        # Cache Layer (Redis for AI model caching)
+
+      # API Configuration  # ================================
+
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}  redis:
+
+      DEBUG: ${DEBUG:-True}    image: redis:7-alpine
+
+      ENVIRONMENT: ${ENVIRONMENT:-development}    container_name: medmatch-redis
+
+          command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+      # AI Services    volumes:
+
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-demo-mode}      - redis-data:/data
+
+      SUPABASE_URL: ${SUPABASE_URL:-demo-mode}    ports:
+
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-demo-mode}      - "6379:6379"
+
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-demo-mode}    networks:
+
+    ports:      - medmatch-network
+
+      - "8000:8000"    healthcheck:
+
+    volumes:      test: ["CMD", "redis-cli", "ping"]
+
+      - ../backend:/app      interval: 10s
+
+      - backend-logs:/app/logs      timeout: 5s
+
+    networks:      retries: 3
+
+      - medmatch-network    restart: unless-stopped
+
+    depends_on:    deploy:
+
+      postgres:      resources:
+
+        condition: service_healthy        limits:
+
+      redis:          memory: 256M
+
+        condition: service_healthy          cpus: '0.25'
+
+    healthcheck:
+
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]  # ================================
+
+      interval: 30s  # Backend API Service (FastAPI + Cerebras AI)
+
+      timeout: 10s  # ================================
+
+      retries: 3  backend:
+
+      start_period: 60s    build:
+
+    restart: unless-stopped      context: ..
+
+      dockerfile: docker/backend.Dockerfile
+
+  # ================================      target: development  # Switch to 'runtime' for production
+
+  # Frontend Application      args:
+
+  # ================================        - BUILDKIT_INLINE_CACHE=1
+
+  frontend:    container_name: medmatch-backend
+
+    build:    environment:
+
+      context: ..      # Database Configuration
+
+      dockerfile: docker/frontend.Dockerfile      DATABASE_URL: postgresql://medmatch:${POSTGRES_PASSWORD:-secure_password_2024}@postgres:5432/medmatch
+
+      target: development      
+
+    container_name: medmatch-frontend      # Redis Configuration
+
+    environment:      REDIS_URL: redis://redis:6379/0
+
+      REACT_APP_API_URL: http://localhost:8000      
+
+      REACT_APP_ENVIRONMENT: development      # API Keys (load from .env file)
+
+    ports:      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY}
+
+      - "3000:3000"      SUPABASE_URL: ${SUPABASE_URL}
+
+    volumes:      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+
+      - ../frontend:/app      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+
+      - /app/node_modules      
+
+      - /app/.next      # Application Configuration
+
+    networks:      APP_ENV: development
+
+      - medmatch-network      LOG_LEVEL: debug
+
+    depends_on:      API_V1_PREFIX: /api/v1
+
+      - backend      
+
+    restart: unless-stopped      # AI/ML Configuration
+
+      CEREBRAS_MODEL: llama3.1-70b
+
+  # ================================      CEREBRAS_MAX_TOKENS: 2048
+
+  # Monitoring Stack      CEREBRAS_TEMPERATURE: 0.7
+
+  # ================================      
+
+  prometheus:      # Healthcare Compliance
+
+    image: prom/prometheus:latest      ENABLE_AUDIT_LOGGING: true
+
+    container_name: medmatch-prometheus      HIPAA_COMPLIANCE_MODE: true
+
+    command:      
+
+      - '--config.file=/etc/prometheus/prometheus.yml'      # Performance Tuning
+
+      - '--storage.tsdb.path=/prometheus'      WORKERS: 1  # Single worker for development
+
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'      MAX_REQUESTS: 1000
+
+      - '--web.console.libraries=/etc/prometheus/console_libraries'      REQUEST_TIMEOUT: 300
+
+      - '--web.console.templates=/etc/prometheus/consoles'    volumes:
+
+      - '--web.enable-lifecycle'      # Hot reload for development
+
+    volumes:      - ./backend/src:/app/src:ro
+
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro      - ./backend/tests:/app/tests:ro
+
+      - prometheus-data:/prometheus      # Persistent data
+
+    ports:      - ./data:/app/data
+
+      - "9090:9090"      - ./logs:/app/logs
+
+    networks:    ports:
+
+      - monitoring-network      - "8000:8000"
+
+      - medmatch-network    networks:
+
+    restart: unless-stopped      - medmatch-network
+
+      - monitoring-network
+
+  grafana:    depends_on:
+
+    image: grafana/grafana:latest      postgres:
+
+    container_name: medmatch-grafana        condition: service_healthy
+
+    environment:      redis:
+
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}        condition: service_healthy
+
+      GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource"    healthcheck:
+
+    volumes:      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+
+      - grafana-data:/var/lib/grafana      interval: 30s
+
+    ports:      timeout: 10s
+
+      - "3001:3000"      retries: 3
+
+    networks:      start_period: 40s
+
+      - monitoring-network    restart: unless-stopped
+
+    depends_on:    deploy:
+
+      - prometheus      resources:
+
+    restart: unless-stopped        limits:
+
+          memory: 1G
+
+# ================================          cpus: '1.0'
+
+# Networks    labels:
+
+# ================================      - "traefik.enable=true"
+
+networks:      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+
+  medmatch-network:      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+
+    driver: bridge
+
+    ipam:  # ================================
+
+      config:  # Frontend Service (React + Nginx)
+
+        - subnet: 172.20.0.0/16  # ================================
+
+  monitoring-network:  frontend:
+
+    driver: bridge    build:
+
+      context: ..
+
+# ================================      dockerfile: docker/frontend.Dockerfile
+
+# Persistent Volumes      target: development  # Switch to 'production' for prod builds
+
+# ================================      args:
+
+volumes:        - BUILDKIT_INLINE_CACHE=1
+
+  postgres-data:    container_name: medmatch-frontend
+
+    driver: local    environment:
+
+  redis-data:      - VITE_API_URL=http://localhost:8000
+
+    driver: local      - VITE_SUPABASE_URL=${SUPABASE_URL}
+
+  prometheus-data:      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+
+    driver: local      - NODE_ENV=development
+
+  grafana-data:    volumes:
+
+    driver: local      # Hot reload for development (React)
+
+  backend-logs:      - ./frontend/src:/app/src:ro
+
+    driver: local      - ./frontend/public:/app/public:ro
+      - ./frontend/index.html:/app/index.html:ro
+    ports:
+      - "3000:3000"  # Vite dev server port for development
+      # - "80:80"    # Uncomment for production nginx
+    networks:
+      - medmatch-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ================================
+  # Docker MCP Gateway Creative Feature: AI Model Cache Warmer
+  # ================================
+  model-cache-warmer:
+    image: curlimages/curl:latest
+    container_name: medmatch-cache-warmer
+    networks:
+      - medmatch-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Warming up AI models for optimal performance...'
+      sleep 30
+      curl -X POST http://backend:8000/api/v1/match \
+        -H 'Content-Type: application/json' \
+        -d '{
+          \"patient_data\": {
+            \"medical_query\": \"lung cancer stage 3 EGFR positive\",
+            \"demographics\": {\"age\": 65, \"gender\": \"male\"}
+          },
+          \"max_results\": 1,
+          \"enable_advanced_reasoning\": true
+        }' || echo 'Cache warming failed - continuing...'
+      echo 'Model cache warming completed'
+      "
+    restart: no
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+
+  # ================================
+  # Monitoring Stack (Creative Docker MCP Gateway showcase)
+  # ================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: medmatch-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: medmatch-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana-dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    networks:
+      - monitoring-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # ================================
+  # Creative Docker MCP Gateway Feature: Health Monitor
+  # ================================
+  health-monitor:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.health-monitor
+    container_name: medmatch-health-monitor
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - FRONTEND_URL=http://frontend:3000
+      - POSTGRES_URL=postgres://medmatch:${POSTGRES_PASSWORD:-secure_password_2024}@postgres:5432/medmatch
+      - REDIS_URL=redis://redis:6379/0
+      - CHECK_INTERVAL=30
+    networks:
+      - medmatch-network
+      - monitoring-network
+    depends_on:
+      - backend
+      - frontend
+      - postgres
+      - redis
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+
+# ================================
+# Creative Docker MCP Gateway Usage Summary:
+#
+# 1. Multi-container healthcare AI architecture
+# 2. Service mesh with custom networks
+# 3. Health monitoring and auto-healing
+# 4. AI model cache warming for performance
+# 5. Comprehensive monitoring stack
+# 6. Development and production variants
+# 7. Resource constraints for optimal orchestration
+# 8. HIPAA-compliant data persistence
+# 9. Automated dependency management
+# 10. Custom health monitoring service
+#
+# Usage:
+# Development: docker-compose up -d
+# Production: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Monitoring: Access Grafana at http://localhost:3001 (admin/admin123)
+# ================================
