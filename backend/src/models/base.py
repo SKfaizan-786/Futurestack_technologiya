@@ -318,8 +318,16 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     Yields:
         AsyncSession: Database session for request handling
     """
-    async with db_manager.get_session() as session:
-        yield session
+    if not db_manager._initialized:
+        await db_manager.initialize()
+    
+    async with db_manager.async_session_maker() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 # Database initialization function

@@ -37,7 +37,7 @@ class Settings(BaseSettings):
         default="llama3.1-8b",
         alias="CEREBRAS_MODEL"
     )
-    cerebras_max_tokens: int = Field(default=1000, alias="CEREBRAS_MAX_TOKENS")
+    cerebras_max_tokens: int = Field(default=2000, alias="CEREBRAS_MAX_TOKENS")
     cerebras_timeout: int = Field(default=30, alias="CEREBRAS_TIMEOUT")
     
     # ClinicalTrials.gov API

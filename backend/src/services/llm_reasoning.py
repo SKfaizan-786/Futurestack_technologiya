@@ -331,13 +331,22 @@ class LLMReasoningService:
         trial_data: Dict[str, Any]
     ) -> str:
         """Format the eligibility assessment prompt."""
-        # Extract patient data safely
-        age = patient_data.get('age', 'Not specified')
-        gender = patient_data.get('gender', 'Not specified')
-        conditions = patient_data.get('conditions', patient_data.get('medical_conditions', []))
+        
+        # Extract patient information from the actual data structure we receive
+        raw_data = patient_data.get('raw_data', {})
+        medical_query = raw_data.get('medical_query', '')
+        
+        # Extract from primary_conditions and extracted_entities
+        conditions = patient_data.get('primary_conditions', [])
         medications = patient_data.get('medications', [])
-        medical_history = patient_data.get('medical_history', [])
-        allergies = patient_data.get('allergies', [])
+        
+        # Get structured demographics (now properly extracted)
+        age = patient_data.get('age')
+        gender = patient_data.get('gender') 
+        
+        # Format age and gender for display
+        age_display = f"{age} years old" if age else "Not specified"
+        gender_display = gender.title() if gender else "Not specified"
         
         # Extract trial data
         trial_id = trial_data.get('nct_id', trial_data.get('id', 'Unknown'))
@@ -348,28 +357,49 @@ class LLMReasoningService:
         criteria = trial_data.get('eligibility_criteria', {})
         inclusion_criteria = criteria.get('inclusion_criteria', [])
         exclusion_criteria = criteria.get('exclusion_criteria', [])
-        age_requirements = criteria.get('age_requirements', 'Not specified')
-        gender_requirements = criteria.get('gender_requirements', 'All')
+        age_requirements = f"{criteria.get('min_age', 18)}-{criteria.get('max_age', 100)} years" if criteria.get('min_age') or criteria.get('max_age') else 'Not specified'
+        gender_requirements = criteria.get('gender', 'All')
         
         # Format lists as bullet points
         inclusion_text = '\n'.join([f"- {item}" for item in inclusion_criteria]) if inclusion_criteria else "- Not specified"
         exclusion_text = '\n'.join([f"- {item}" for item in exclusion_criteria]) if exclusion_criteria else "- Not specified"
         
-        return self.templates.ELIGIBILITY_PROMPT.format(
-            age=age,
-            gender=gender,
-            conditions=", ".join(conditions) if conditions else "None specified",
-            medications=", ".join(medications) if medications else "None specified",
-            medical_history=", ".join(medical_history) if medical_history else "None specified",
-            allergies=", ".join(allergies) if allergies else "None specified",
-            trial_id=trial_id,
-            trial_title=trial_title,
-            trial_conditions=", ".join(trial_conditions) if trial_conditions else "Not specified",
-            inclusion_criteria=inclusion_text,
-            exclusion_criteria=exclusion_text,
-            age_requirements=age_requirements,
-            gender_requirements=gender_requirements
-        )
+        # Create comprehensive prompt with actual patient information
+        return f"""
+COMPREHENSIVE PATIENT PROFILE:
+Medical Query: "{medical_query}"
+Age: {age_display}
+Gender: {gender_display}
+Primary Conditions: {', '.join(conditions) if conditions else 'None specified'}
+Current Medications: {', '.join(medications) if medications else 'None specified'}
+
+CLINICAL TRIAL DETAILS:
+Trial ID: {trial_id}
+Title: {trial_title}
+Target Conditions: {', '.join(trial_conditions) if trial_conditions else 'Not specified'}
+
+ELIGIBILITY CRITERIA:
+Age Requirements: {age_requirements}
+Gender Requirements: {gender_requirements}
+
+Inclusion Criteria:
+{inclusion_text}
+
+Exclusion Criteria:
+{exclusion_text}
+
+TASK:
+As a medical AI specialist, provide a detailed eligibility assessment for this patient regarding this clinical trial. Focus on:
+
+1. PATIENT-TRIAL MATCH: How well does the patient's condition match the trial's target conditions?
+2. DEMOGRAPHIC COMPATIBILITY: Does the patient meet age and gender requirements?
+3. TREATMENT HISTORY: How does their previous treatment history affect eligibility?
+4. SPECIFIC ADVANTAGES: Why is this trial particularly suitable for this patient?
+
+Provide a clear, informative explanation that would help the patient understand why this trial is recommended, focusing on the specific matches between their condition and the trial's focus.
+
+Format your response as a helpful explanation suitable for a patient, highlighting the key reasons this trial matches their specific situation.
+"""
         
     def _format_contraindication_prompt(
         self,
@@ -527,7 +557,7 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
             contraindications=contraindications,
             confidence_factors={
                 "reasoning_quality": confidence_score,
-                "response_length": len(content) / 1000  # Normalize length factor
+                "response_length": min(1.0, len(content) / 5000)  # Normalize to 0-1 scale (5000 chars = 1.0)
             },
             llm_metadata={
                 "llm_usage": response.usage,
@@ -593,9 +623,9 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
                     end_idx = start_idx + 200
                     section_content = content[start_idx:end_idx]
                     
-                    step = ReasoningStep(
+                    step = PydanticReasoningStep(
                         step=f"step_{i}",
-                        analysis=section_content[:100] + "..." if len(section_content) > 100 else section_content,
+                        analysis=section_content,
                         conclusion=f"Assessment for {section}",
                         confidence=0.7,
                         evidence=[]
@@ -642,7 +672,7 @@ Instructions: {style_instruction}. Focus on the key factors that led to this det
         # Look for conclusion section
         if "conclusion" in content.lower():
             start_idx = content.lower().find("conclusion")
-            conclusion_section = content[start_idx:start_idx + 300]
+            conclusion_section = content[start_idx:start_idx + 1000]
             return conclusion_section.strip()
         
         # Fallback: use first sentence

@@ -19,6 +19,7 @@ from .health import router as health_router
 from .endpoints.match import router as match_router
 from .endpoints.trials import router as trials_router
 from .endpoints.notifications import router as notifications_router
+from .endpoints.saved_trials import router as saved_trials_router
 from .middleware import ErrorHandlingMiddleware
 from ..models.base import init_database, db_manager
 from ..utils.logging import configure_logging
@@ -118,8 +119,11 @@ def create_app() -> FastAPI:
     cors_origins = [
         "http://localhost:3000",
         "http://localhost:5173", 
+        "http://localhost:5174",
         "http://127.0.0.1:5173",
-        "https://localhost:5173"
+        "http://127.0.0.1:5174",
+        "https://localhost:5173",
+        "https://localhost:5174"
     ]
     logger.info("Configuring CORS", cors_origins=cors_origins)
     app.add_middleware(
@@ -244,6 +248,7 @@ def create_app() -> FastAPI:
     app.include_router(match_router, prefix=f"{settings.api_prefix}", tags=["matching"])
     app.include_router(trials_router, prefix=f"{settings.api_prefix}", tags=["trials"])
     app.include_router(notifications_router, prefix=f"{settings.api_prefix}", tags=["notifications"])
+    app.include_router(saved_trials_router, prefix=f"{settings.api_prefix}", tags=["saved_trials"])
     
     logger.info("FastAPI application created", 
                title=app.title, version=app.version, environment=settings.environment)

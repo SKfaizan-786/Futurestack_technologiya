@@ -14,6 +14,10 @@ export function Results() {
 
   const savedTrialIds = savedTrials.map(st => st.trial_id);
 
+  // Debug logging
+  console.log('Results component - trials:', trials);
+  console.log('Results component - patientData:', patientData);
+
   if (!trials || trials.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -43,10 +47,19 @@ export function Results() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Clinical Trial Matches</h1>
-          {patientData && (
+          {patientData && patientData.diagnosis && (
             <p className="text-gray-600">
-              Results for: {patientData.diagnosis.cancerType}, Stage {patientData.diagnosis.stage}
-              {' '} • {patientData.location.city}, {patientData.location.state}
+              Results for: {patientData.diagnosis.cancerType || 'Cancer'}, Stage {patientData.diagnosis.stage || 'Unknown'}
+              {patientData.location && (
+                <>
+                  {' '} • {patientData.location.city || 'Unknown'}, {patientData.location.state || 'Unknown'}
+                </>
+              )}
+            </p>
+          )}
+          {patientData && (patientData as any).medical_query && (
+            <p className="text-gray-600">
+              Query: "{(patientData as any).medical_query}"
             </p>
           )}
         </div>

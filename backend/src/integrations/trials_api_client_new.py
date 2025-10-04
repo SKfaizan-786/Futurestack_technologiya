@@ -72,42 +72,6 @@ class ClinicalTrial:
     # For semantic search
     embedding_vector: Optional[List[float]] = None
     search_text: Optional[str] = None
-    
-    def model_dump(self) -> Dict[str, Any]:
-        """Convert to dictionary (Pydantic compatibility)."""
-        return {
-            'nct_id': self.nct_id,
-            'title': self.title,
-            'brief_title': self.brief_title,
-            'status': self.status,
-            'phase': self.phase,
-            'study_type': self.study_type,
-            'conditions': self.conditions,
-            'eligibility_criteria': {
-                'inclusion': self.eligibility_criteria.inclusion,
-                'exclusion': self.eligibility_criteria.exclusion,
-                'age_min': self.eligibility_criteria.age_min,
-                'age_max': self.eligibility_criteria.age_max,
-                'sex': self.eligibility_criteria.sex,
-                'healthy_volunteers': self.eligibility_criteria.healthy_volunteers
-            },
-            'locations': [
-                {
-                    'facility': loc.facility,
-                    'city': loc.city,
-                    'state': loc.state,
-                    'country': loc.country,
-                    'latitude': loc.latitude,
-                    'longitude': loc.longitude
-                } for loc in self.locations
-            ],
-            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
-            'url': self.url,
-            'sponsor': self.sponsor,
-            'description': self.description,
-            'embedding_vector': self.embedding_vector,
-            'search_text': self.search_text
-        }
 
 
 @dataclass
@@ -253,54 +217,19 @@ class ClinicalTrialsClient:
             exclusion=exclusion
         )
     
-    def _normalize_trial_data(self, study_data) -> ClinicalTrial:
+    def _normalize_trial_data(self, study_data: Dict[str, Any]) -> ClinicalTrial:
         """
         Normalize raw API response data into ClinicalTrial object.
         
         Args:
-            study_data: Raw study data from pytrials (could be list or dict)
+            study_data: Raw study data from pytrials
             
         Returns:
             Normalized ClinicalTrial object
         """
-        # Handle pytrials CSV format (list of values)
-        if isinstance(study_data, list):
-            # PyTrials CSV format: ['NCT Number', 'Study Title', 'Study URL', 'Acronym', 'Study Status', ...]
-            nct_id = study_data[0] if len(study_data) > 0 else "Unknown"
-            title = study_data[1] if len(study_data) > 1 else "Unknown Title"
-            brief_title = title
-            status = study_data[4] if len(study_data) > 4 else "Unknown"  # Study Status is at index 4
-            
-            # Extract search terms from title for better matching
-            search_terms = title.lower()
-            conditions = []
-            if 'lung' in search_terms:
-                conditions.append('lung cancer')
-            if 'cancer' in search_terms:
-                conditions.append('cancer')
-            if not conditions:
-                conditions = ['cancer']  # Default
-            
-            return ClinicalTrial(
-                nct_id=nct_id,
-                title=title,
-                brief_title=brief_title,
-                status=status,
-                phase=None,
-                study_type="Interventional",  # Default assumption
-                conditions=conditions,
-                eligibility_criteria=EligibilityCriteria(),
-                locations=[],
-                last_updated=datetime.now(),
-                url=f"https://clinicaltrials.gov/study/{nct_id}",
-                sponsor=None,
-                description=title,  # Use title as description
-                search_text=title
-            )
-        
-        # Original dict handling (keeping for compatibility)
+        # Defensive check - ensure study_data is a dictionary
         if not isinstance(study_data, dict):
-            raise ValueError(f"Expected dict or list for study_data, got {type(study_data)}: {study_data}")
+            raise ValueError(f"Expected dict for study_data, got {type(study_data)}: {study_data}")
         
         protocol = study_data.get("ProtocolSection", {})
         
@@ -428,24 +357,22 @@ class ClinicalTrialsClient:
             Search results with trials and pagination info
         """
         # Build search expression for pytrials
-        # Use simple search terms - pytrials will handle the rest
-        search_terms = []
+        search_expr_parts = []
         
         if conditions:
             # Use the primary condition for search
             primary_condition = conditions[0]
-            search_terms.append(primary_condition)
+            search_expr_parts.append(f"AREA[Condition]{primary_condition}")
         
         if keywords:
-            # Add keywords to search terms
-            search_terms.extend(keywords)
+            for keyword in keywords:
+                search_expr_parts.append(f"AREA[OtherTerm]{keyword}")
         
         # Default to a general search if no conditions/keywords
-        if not search_terms:
-            search_terms.append("cancer")
+        if not search_expr_parts:
+            search_expr_parts.append("AREA[Condition]cancer")
         
-        # Use simple search - just pass the condition directly
-        search_expr = search_terms[0]
+        search_expr = " OR ".join(search_expr_parts)
         
         # Status filtering (convert to pytrials format)
         status_mapping = {
@@ -456,14 +383,13 @@ class ClinicalTrialsClient:
             "TERMINATED": "Terminated"
         }
         
-        # Skip status filtering for now to avoid syntax errors
-        # if status_filter:
-        #     status_parts = []
-        #     for status in status_filter:
-        #         mapped_status = status_mapping.get(status.upper(), status)
-        #         status_parts.append(f"AREA[OverallStatus]{mapped_status}")
-        #     if status_parts:
-        #         search_expr += " AND (" + " OR ".join(status_parts) + ")"
+        if status_filter:
+            status_parts = []
+            for status in status_filter:
+                mapped_status = status_mapping.get(status.upper(), status)
+                status_parts.append(f"AREA[OverallStatus]{mapped_status}")
+            if status_parts:
+                search_expr += " AND (" + " OR ".join(status_parts) + ")"
         
         logger.info(f"PyTrials search expression: {search_expr}")
         logger.info(f"Requesting max {page_size} studies")
@@ -477,45 +403,31 @@ class ClinicalTrialsClient:
             
             logger.info(f"PyTrials returned {len(studies)} studies")
             
-            # PyTrials returns CSV format with headers in first row
-            if not studies:
-                logger.warning("No studies returned from PyTrials")
-                trials = []
-            elif len(studies) == 1:
-                logger.warning("Only header row returned from PyTrials")
-                trials = []
-            else:
-                # Skip header row (first row contains field names)
-                header_row = studies[0]
-                data_rows = studies[1:]
-                logger.info(f"Processing {len(data_rows)} study records (header: {header_row[:3]})")
-                
-                # Normalize trial data
-                trials = []
-                for study_row in data_rows:
-                    try:
-                        trial = self._normalize_trial_data(study_row)
+            # Normalize trial data
+            trials = []
+            for study in studies:
+                try:
+                    trial = self._normalize_trial_data(study)
+                    
+                    # Apply age filtering if specified
+                    if age_range:
+                        min_age, max_age = age_range
+                        trial_min = trial.eligibility_criteria.age_min
+                        trial_max = trial.eligibility_criteria.age_max
                         
-                        # Apply age filtering if specified
-                        if age_range:
-                            min_age, max_age = age_range
-                            trial_min = trial.eligibility_criteria.age_min
-                            trial_max = trial.eligibility_criteria.age_max
-                            
-                            # Skip if age ranges don't overlap
-                            if trial_min and max_age and trial_min > max_age:
-                                continue
-                            if trial_max and min_age and trial_max < min_age:
-                                continue
-                        
-                        trials.append(trial)
-                        
-                    except Exception as e:
-                        logger.warning("Failed to normalize trial data", 
-                                     study_type=type(study_row).__name__,
-                                     study_preview=str(study_row)[:100] if study_row else "None",
-                                     error=str(e))
-                        continue
+                        # Skip if age ranges don't overlap
+                        if trial_min and max_age and trial_min > max_age:
+                            continue
+                        if trial_max and min_age and trial_max < min_age:
+                            continue
+                    
+                    trials.append(trial)
+                    
+                except Exception as e:
+                    logger.warning("Failed to normalize trial data", 
+                                 nct_id=study.get("ProtocolSection", {}).get("IdentificationModule", {}).get("NCTId"),
+                                 error=str(e))
+                    continue
             
             logger.info("Trial search completed",
                        total_results=len(trials), 

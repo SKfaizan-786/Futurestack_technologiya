@@ -42,6 +42,7 @@ def validate_patient_data(patient_data: Dict[str, Any]) -> bool:
     # Check for required fields (at least one of these must be present)
     required_fields = [
         "medical_history", 
+        "medical_query",    # Add support for natural language queries
         "clinical_notes", 
         "demographics", 
         "current_medications"

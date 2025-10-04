@@ -26,13 +26,20 @@ class MedicalVocabulary:
         'her2 negative breast cancer',
         'non-small cell lung cancer',
         'small cell lung cancer',
+        'stage 3 non-small cell lung cancer',
+        'stage 4 breast cancer',
+        'metastatic breast cancer',
+        'metastatic colorectal cancer',
+        'colorectal cancer',
+        'colon cancer',
+        'rectal cancer',
+        'castration-resistant prostate cancer',
         'acute myeloid leukemia',
         'chronic lymphocytic leukemia',
         'stage 1 breast cancer',
         'stage 2 breast cancer', 
         'stage 3 breast cancer',
         'stage 4 breast cancer',
-        'metastatic breast cancer',
         'locally advanced breast cancer',
         'type 1 diabetes mellitus',
         'type 2 diabetes mellitus',
@@ -57,8 +64,10 @@ class MedicalVocabulary:
         'diabetes': ['diabetes', 'diabetes mellitus', 'type 1 diabetes', 'type 2 diabetes', 'diabetic', 'dm', 't2dm', 'diabetes type 2', 'diabetes mellitus type ii'],
         'hypertension': ['hypertension', 'high blood pressure', 'htn', 'elevated blood pressure'],
         'cancer': ['cancer', 'carcinoma', 'tumor', 'neoplasm', 'malignancy', 'oncology'],
-        'breast_cancer': ['breast cancer', 'breast carcinoma', 'breast neoplasm', 'breast tumor'],
-        'lung_cancer': ['lung cancer', 'lung carcinoma', 'nsclc', 'non-small cell lung cancer', 'adenocarcinoma of lung', 'egfr mutation', 'egfr positive', 'brain metastases'],
+        'breast_cancer': ['breast cancer', 'breast carcinoma', 'breast neoplasm', 'breast tumor', 'triple negative breast cancer', 'her2 positive breast cancer', 'triple negative'],
+        'lung_cancer': ['lung cancer', 'lung carcinoma', 'nsclc', 'non-small cell lung cancer', 'adenocarcinoma of lung', 'egfr mutation', 'egfr positive', 'brain metastases', 'stage 3 non-small cell lung cancer'],
+        'colorectal_cancer': ['colorectal cancer', 'colon cancer', 'rectal cancer', 'colorectal carcinoma', 'metastatic colorectal cancer'],
+        'prostate_cancer': ['prostate cancer', 'prostate carcinoma', 'castration-resistant prostate cancer'],
         'cardiovascular': ['heart disease', 'cardiovascular disease', 'cvd', 'coronary artery disease', 'cad'],
         'respiratory': ['asthma', 'copd', 'chronic obstructive pulmonary disease', 'bronchitis'],
         'kidney': ['kidney disease', 'renal disease', 'chronic kidney disease', 'ckd', 'nephropathy'],
@@ -75,7 +84,10 @@ class MedicalVocabulary:
         'cholesterol': ['atorvastatin', 'simvastatin', 'rosuvastatin', 'pravastatin'],
         'pain': ['ibuprofen', 'acetaminophen', 'aspirin', 'naproxen', 'tramadol'],
         'antibiotics': ['amoxicillin', 'azithromycin', 'ciprofloxacin', 'doxycycline'],
-        'psychiatric': ['sertraline', 'fluoxetine', 'escitalopram', 'aripiprazole', 'quetiapine']
+        'psychiatric': ['sertraline', 'fluoxetine', 'escitalopram', 'aripiprazole', 'quetiapine'],
+        'chemotherapy': ['folfox', 'folfiri', 'capecitabine', 'oxaliplatin', 'carboplatin', 'docetaxel', 'paclitaxel'],
+        'targeted_therapy': ['erlotinib', 'gefitinib', 'osimertinib', 'trastuzumab', 'bevacizumab', 'cetuximab'],
+        'immunotherapy': ['pembrolizumab', 'nivolumab', 'atezolizumab', 'durvalumab']
     }
     
     # Medical procedures
@@ -233,8 +245,11 @@ class MedicalNLPProcessor:
         entities["excluded_conditions"] = self._extract_excluded_entities(processed_text)
         
         # Remove duplicates and clean up
-        for key in ["conditions", "medications", "procedures", "lab_values", "demographics"]:
-            entities[key] = list(set(entities[key]))
+        for key in ["conditions", "medications", "procedures", "lab_values"]:
+            if key in entities and isinstance(entities[key], list):
+                entities[key] = list(set(entities[key]))
+        
+        # Demographics is now a dict, not a list - no need to deduplicate
             
         return entities
         
@@ -329,25 +344,59 @@ class MedicalNLPProcessor:
         else:
             return "all"
             
-    def _extract_demographics(self, text: str) -> List[str]:
-        """Extract demographic-related information."""
-        demographics = []
+    def _extract_demographics(self, text: str) -> Dict[str, Any]:
+        """Extract structured demographic information including age and gender."""
+        demographics = {
+            "age": None,
+            "gender": None,
+            "other_demographics": []
+        }
         
-        demographic_patterns = [
-            r'\\b(?:pregnant|pregnancy)\\b',
-            r'\\b(?:nursing|breastfeeding)\\b',
-            r'\\b(?:childbearing\\s*age)\\b',
-            r'\\b(?:postmenopausal)\\b',
-            r'\\b(?:elderly|geriatric)\\b',
-            r'\\b(?:pediatric|children)\\b',
-            r'\\b(?:adult|adults)\\b'
+        # Extract specific age (improved patterns to avoid stage confusion)
+        age_patterns = [
+            r'\bage\s*(\d+)\b',  # "age 45" - more specific word boundary
+            r'(\d+)\s*year\s*old',  # "45 year old"
+            r'(\d+)\s*year\s*old\s*(?:female|male|woman|man)',  # "45 year old female"
+            r'(\d+)\s*yo\b',  # "45 yo" (year old abbreviation)
         ]
         
-        for pattern in demographic_patterns:
+        for pattern in age_patterns:
             matches = re.findall(pattern, text, re.IGNORECASE)
-            demographics.extend(matches)
+            if matches:
+                try:
+                    demographics["age"] = int(matches[0])
+                    break  # Use first match found
+                except (ValueError, IndexError):
+                    continue
+        
+        # Extract specific gender
+        gender_patterns = [
+            (r'\b(?:female|woman|girl)\b', 'female'),
+            (r'\b(?:male|man|boy)\b', 'male'),
+        ]
+        
+        for pattern, gender in gender_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                demographics["gender"] = gender
+                break
+        
+        # Extract other demographic information
+        other_demographic_patterns = [
+            r'\b(?:pregnant|pregnancy)\b',
+            r'\b(?:nursing|breastfeeding)\b',
+            r'\b(?:childbearing\s*age)\b',
+            r'\b(?:postmenopausal)\b',
+            r'\b(?:elderly|geriatric)\b',
+            r'\b(?:pediatric|children)\b',
+        ]
+        
+        for pattern in other_demographic_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            demographics["other_demographics"].extend(matches)
             
-        return list(set(demographics))
+        demographics["other_demographics"] = list(set(demographics["other_demographics"]))
+        
+        return demographics
         
     def calculate_text_complexity(self, text: str) -> float:
         """

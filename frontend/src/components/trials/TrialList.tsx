@@ -12,14 +12,23 @@ interface TrialListProps {
 export function TrialList({ trials, savedTrialIds = [], onSave, onRemove }: TrialListProps) {
   const [sortBy, setSortBy] = useState<'match' | 'distance'>('match');
 
-  const sortedTrials = [...trials].sort((a, b) => {
+  // Defensive check for trial data
+  const validTrials = trials.filter(trial => 
+    trial && 
+    typeof trial === 'object' && 
+    trial.matchScore !== undefined && 
+    trial.location !== undefined &&
+    trial.location.distance !== undefined
+  );
+
+  const sortedTrials = [...validTrials].sort((a, b) => {
     if (sortBy === 'match') {
-      return b.matchScore - a.matchScore;
+      return (b.matchScore || 0) - (a.matchScore || 0);
     }
-    return a.location.distance - b.location.distance;
+    return (a.location?.distance || 0) - (b.location?.distance || 0);
   });
 
-  if (trials.length === 0) {
+  if (validTrials.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No trials found matching your criteria.</p>
@@ -32,7 +41,7 @@ export function TrialList({ trials, savedTrialIds = [], onSave, onRemove }: Tria
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">
-          Found <span className="font-semibold text-gray-900">{trials.length}</span> matching trials
+          Found <span className="font-semibold text-gray-900">{validTrials.length}</span> matching trials
         </p>
         <div className="flex items-center space-x-2">
           <label htmlFor="sort" className="text-sm text-gray-600">
