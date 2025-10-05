@@ -1,268 +1,394 @@
 @import "tailwindcss";
 
+@layer utilities {
+  /* Floating orbs */
+  @keyframes float {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    33% { transform: translate(30px, -40px) rotate(5deg); }
+    66% { transform: translate(-20px, 20px) rotate(-5deg); }
+  }
+  
+  .animate-float {
+    animation: float 20s ease-in-out infinite;
+  }
+  
+  .animate-float-delayed {
+    animation: float 20s ease-in-out infinite;
+    animation-delay: 10s;
+  }
+  
+  /* Gradient animation */
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  .animate-gradient {
+    animation: gradient 8s linear infinite;
+  }
+  
+  /* Fade in animations */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+  }
+  
+  .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
+  .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
+  .animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
+  
+  /* Scroll indicator */
+  @keyframes scroll {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(12px); opacity: 0; }
+  }
+  
+  .animate-scroll {
+    animation: scroll 1.5s ease-in-out infinite;
+  }
+  
+  /* Gradient radial */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  /* Blob animation for hero section */
+  @keyframes blob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(20px, -50px) scale(1.1); }
+    50% { transform: translate(-30px, 30px) scale(0.9); }
+    75% { transform: translate(30px, 10px) scale(1.05); }
+  }
+
+  .animate-blob {
+    animation: blob 25s infinite ease-in-out;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Scale in animation for results page */
+  @keyframes scale-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.5s ease-out;
+  }
+
+  /* Slide down animation */
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out;
+  }
+}
+
 @layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    
+    /* Custom CSS variables for consistent theming */
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-secondary: #64748b;
+    --color-success: #059669;
+    --color-error: #dc2626;
+    --color-warning: #d97706;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: #e5e7eb;
+  }
   body {
+    background-color: white;
+    color: #1f2937;
+    font-feature-settings: "rlig" 1, "calt" 1;
     font-family: system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Fix button visibility and hover issues */
-button, .btn, a[class*="bg-primary"], a[class*="bg-blue"], a[class*="px-"], 
-Link[class*="bg-"], Link[class*="px-"] {
-  cursor: pointer !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transition: all 0.2s ease-in-out !important;
-  display: inline-block !important;
+/* Custom utilities */
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(to right, #2563eb, #0891b2);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  
+  .gradient-bg {
+    background: linear-gradient(to right, #2563eb, #0891b2);
+  }
+  
+  .gradient-bg-reverse {
+    background: linear-gradient(to left, #0891b2, #2563eb);
+  }
 }
 
-button:hover, .btn:hover, a[class*="bg-primary"]:hover, a[class*="bg-blue"]:hover,
-a[class*="px-"]:hover, Link[class*="bg-"]:hover {
-  cursor: pointer !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+/* Fix for buttons and components - preserving existing functionality */
+@layer components {
+  .btn-primary, .btn-secondary, .btn-outline {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+    border: 1px solid var(--color-primary) !important;
+  }
 
-/* Ensure all button text is visible */
-button *, .btn *, a[class*="bg-"] *, a[class*="px-"] * {
-  opacity: 1 !important;
-  visibility: visible !important;
-  color: inherit !important;
-}
+  .btn-secondary {
+    background-color: transparent !important;
+    color: var(--color-primary) !important;
+  }
 
-/* Fix specific primary button styles */
-.bg-primary-blue, a.bg-primary-blue, button.bg-primary-blue {
-  background-color: #4A90E2 !important;
-  color: white !important;
-  border: none !important;
-}
+  .btn-outline {
+    background-color: transparent !important;
+    color: var(--color-primary) !important;
+  }
 
-.bg-primary-blue:hover, a.bg-primary-blue:hover, button.bg-primary-blue:hover {
-  background-color: #357ABD !important;
-  color: white !important;
-}
+  .btn-primary:hover {
+    background-color: var(--color-primary-dark) !important;
+  }
 
-/* Ensure text contrast */
-.text-white {
-  color: white !important;
-}
+  .btn-secondary:hover, .btn-outline:hover {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+  }
 
-.text-primary-blue {
-  color: #4A90E2 !important;
-}
+  /* Fix button visibility and hover issues */
+  button, .btn, a[class*="bg-primary"], a[class*="bg-blue"], a[class*="px-"], 
+  Link[class*="bg-"], Link[class*="px-"] {
+    cursor: pointer !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: all 0.2s ease-in-out !important;
+    display: inline-block !important;
+  }
 
-/* Fix link buttons */
-a[class*="px-"]:hover {
-  text-decoration: none !important;
-}
+  button:hover, .btn:hover, a[class*="bg-primary"]:hover, a[class*="bg-blue"]:hover,
+  a[class*="px-"]:hover, Link[class*="bg-"]:hover {
+    cursor: pointer !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 
-/* Fix form buttons specifically */
-button[type="submit"], input[type="submit"] {
-  background-color: #4A90E2 !important;
-  color: white !important;
-  cursor: pointer !important;
-  border: none !important;
-  padding: 12px 24px !important;
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-}
+  /* Ensure all button text is visible */
+  button *, .btn *, a[class*="bg-"] *, a[class*="px-"] * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    color: inherit !important;
+  }
 
-button[type="submit"]:hover, input[type="submit"]:hover {
-  background-color: #357ABD !important;
-  transform: translateY(-1px) !important;
-}
+  /* Fix specific primary button styles */
+  .bg-primary-blue, a.bg-primary-blue, button.bg-primary-blue {
+    background-color: #4A90E2 !important;
+    color: white !important;
+    border: none !important;
+  }
 
-/* Fix disabled state */
-button:disabled, input:disabled {
-  opacity: 0.6 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-}
+  .bg-primary-blue:hover, a.bg-primary-blue:hover, button.bg-primary-blue:hover {
+    background-color: #357ABD !important;
+    color: white !important;
+  }
 
-/* Fix specific Landing page buttons */
-a[href="/signup"], a[href="/login"] {
-  display: inline-block !important;
-  text-decoration: none !important;
-  font-weight: 600 !important;
-}
+  /* SVG icons visibility fix */
+  svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
 
-/* Fix icon visibility in feature boxes and cards */
-.w-12.h-12 svg, .w-6.h-6, .w-8.h-8, svg {
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
-}
+  /* Specific fix for Lucide icons */
+  svg.lucide,
+  .lucide-zap,
+  .lucide-search, 
+  .lucide-shield,
+  .lucide-user {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2.5 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
 
-/* Fix specific icon containers in landing page and dashboard */
-.w-12.h-12.bg-primary-blue.bg-opacity-10,
-.w-12.h-12.bg-secondary-green.bg-opacity-10,
-.w-12.h-12.bg-primary-teal.bg-opacity-10 {
-  background-color: rgba(74, 144, 226, 0.15) !important; /* Slightly higher opacity for contrast */
-  border-radius: 0.5rem; /* Softer corners */
-  padding: 0.25rem; /* Padding for icon */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-}
+  /* Fix icon containers in landing page and dashboard */
+  .w-12.h-12.bg-primary-blue.bg-opacity-10,
+  .w-12.h-12.bg-secondary-green.bg-opacity-10,
+  .w-12.h-12.bg-primary-teal.bg-opacity-10 {
+    background-color: rgba(74, 144, 226, 0.15) !important;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+  }
 
-.w-12.h-12.bg-primary-blue.bg-opacity-10:hover {
-  background-color: rgba(74, 144, 226, 0.25) !important; /* Hover effect */
-}
+  /* Form elements visibility fix */
+  input, textarea, select {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #d1d5db !important;
+  }
 
-.w-12.h-12.bg-secondary-green.bg-opacity-10 {
-  background-color: rgba(136, 212, 152, 0.15) !important;
-}
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--color-primary) !important;
+    outline-offset: 2px !important;
+  }
 
-.w-12.h-12.bg-secondary-green.bg-opacity-10:hover {
-  background-color: rgba(136, 212, 152, 0.25) !important;
-}
+  /* Navigation fixes */
+  .navbar {
+    background-color: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
 
-.w-12.h-12.bg-primary-teal.bg-opacity-10 {
-  background-color: rgba(58, 175, 169, 0.15) !important;
-}
+  .navbar a {
+    color: black !important;
+  }
 
-.w-12.h-12.bg-primary-teal.bg-opacity-10:hover {
-  background-color: rgba(58, 175, 169, 0.25) !important;
-}
+  .navbar .logo {
+    color: var(--color-primary) !important;
+    font-weight: bold !important;
+  }
 
-/* Increase icon size and refine styling */
-.w-12.h-12 .w-6.h-6,
-.w-12.h-12 svg {
-  width: 2rem !important; /* 32px */
-  height: 2rem !important;
-  color: #4A90E2 !important;
-  fill: none !important;
-  stroke: #4A90E2 !important;
-  stroke-width: 2.5 !important; /* Bolder stroke */
-  transition: stroke 0.3s ease, transform 0.3s ease;
-}
+  /* Fix navbar button alignment */
+  nav .flex.items-center.space-x-1, 
+  button.flex.items-center.space-x-1,
+  a.flex.items-center.space-x-1 {
+    display: flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    flex-direction: row !important;
+    gap: 4px !important;
+  }
 
-.w-12.h-12.bg-primary-blue.bg-opacity-10:hover .w-6.h-6,
-.w-12.h-12.bg-primary-blue.bg-opacity-10:hover svg {
-  stroke: #357ABD !important; /* Darker blue on hover */
-  transform: scale(1.1); /* Slight scale-up */
-}
+  /* Card visibility improvements */
+  .card {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
 
-.w-12.h-12.bg-secondary-green.bg-opacity-10 .w-6.h-6,
-.w-12.h-12.bg-secondary-green.bg-opacity-10 svg {
-  color: #88D498 !important;
-  stroke: #88D498 !important;
-}
+  .card-title {
+    color: black !important;
+  }
 
-.w-12.h-12.bg-secondary-green.bg-opacity-10:hover .w-6.h-6,
-.w-12.h-12.bg-secondary-green.bg-opacity-10:hover svg {
-  stroke: #6ABF7A !important; /* Darker green */
-  transform: scale(1.1);
-}
+  .card-text {
+    color: #374151 !important;
+  }
 
-.w-12.h-12.bg-primary-teal.bg-opacity-10 .w-6.h-6,
-.w-12.h-12.bg-primary-teal.bg-opacity-10 svg {
-  color: #3AAFA9 !important;
-  stroke: #3AAFA9 !important;
-}
+  /* Search results */
+  .search-result {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 1rem !important;
+    padding: 1rem !important;
+    border-radius: 0.5rem !important;
+  }
 
-.w-12.h-12.bg-primary-teal.bg-opacity-10:hover .w-6.h-6,
-.w-12.h-12.bg-primary-teal.bg-opacity-10:hover svg {
-  stroke: #2D8C87 !important; /* Darker teal */
-  transform: scale(1.1);
-}
+  .search-result:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
 
-/* Fix Profile page icon visibility */
-.w-16.h-16.bg-primary-blue.bg-opacity-10 {
-  background-color: rgba(74, 144, 226, 0.1) !important;
-}
+  .search-result h3 {
+    color: var(--color-primary) !important;
+    margin-bottom: 0.5rem !important;
+  }
 
-.w-16.h-16 svg,
-.w-16.h-16 .w-8.h-8 {
-  color: #4A90E2 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
-  margin: auto !important;
-  fill: none !important;
-  stroke: #4A90E2 !important;
-  stroke-width: 2 !important;
-}
+  .search-result p {
+    color: #374151 !important;
+  }
 
-/* Fix icon containers */
-.bg-opacity-10, .bg-primary-blue.bg-opacity-10, .bg-secondary-green.bg-opacity-10, 
-.bg-primary-teal.bg-opacity-10 {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
+  /* State classes */
+  .loading {
+    opacity: 0.6 !important;
+  }
 
-/* Ensure icons are always visible */
-svg, .lucide {
-  opacity: 1 !important;
-  visibility: visible !important;
-  fill: currentColor !important;
-  stroke: currentColor !important;
-}
+  .loading button {
+    cursor: not-allowed !important;
+  }
 
-/* Specific fix for Lucide icons (Zap, Search, Shield, User) */
-svg.lucide,
-.lucide-zap,
-.lucide-search, 
-.lucide-shield,
-.lucide-user {
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
-  fill: none !important;
-  stroke: currentColor !important;
-  stroke-width: 2.5 !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-}
+  .error {
+    color: #dc2626 !important;
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+  }
 
-/* Force all SVG icons to be visible */
-svg[data-lucide],
-[data-lucide] {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix navbar button alignment - make items inline */
-nav .flex.items-center.space-x-1, 
-button.flex.items-center.space-x-1,
-a.flex.items-center.space-x-1 {
-  display: flex !important;
-  align-items: center !important;
-  white-space: nowrap !important;
-  flex-direction: row !important;
-  gap: 4px !important;
-}
-
-/* Prevent text wrapping in navigation buttons */
-nav button, nav a {
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Fix navbar spacing */
-nav .flex.items-center.space-x-6 {
-  display: flex !important;
-  align-items: center !important;
-  gap: 1.5rem !important;
-  flex-wrap: nowrap !important;
-}
-
-/* Ensure navbar items don't break */
-header nav {
-  min-width: fit-content !important;
-}
-
-/* Fix specific Sign Out button */
-button.flex.items-center.space-x-1 {
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  transition: background-color 0.2s !important;
-}
-
-button.flex.items-center.space-x-1:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  .success {
+    color: #059669 !important;
+    background-color: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+  }
 }

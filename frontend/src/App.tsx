@@ -26,25 +26,55 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    
-     <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-1">
               <Routes>
+                {/* Landing page handles its own spacing for fixed header */}
                 <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
+                
+                {/* Auth pages with proper spacing */}
+                <Route path="/login" element={
+                  <div className="pt-16">
+                    <Login />
+                  </div>
+                } />
+                <Route path="/signup" element={
+                  <div className="pt-16">
+                    <Signup />
+                  </div>
+                } />
 
-                {/* Protected Routes */}
+                {/* Protected Routes with proper spacing */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/search" element={<TrialSearch />} />
-                  <Route path="/results" element={<Results />} />
-                  <Route path="/saved" element={<SavedTrials />} />
-                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={
+                    <div className="pt-16">
+                      <Dashboard />
+                    </div>
+                  } />
+                  <Route path="/search" element={
+                    <div className="pt-16">
+                      <TrialSearch />
+                    </div>
+                  } />
+                  <Route path="/results" element={
+                    <div className="pt-16">
+                      <Results />
+                    </div>
+                  } />
+                  <Route path="/saved" element={
+                    <div className="pt-16">
+                      <SavedTrials />
+                    </div>
+                  } />
+                  <Route path="/profile" element={
+                    <div className="pt-16">
+                      <Profile />
+                    </div>
+                  } />
                 </Route>
 
                 {/* Fallback */}
@@ -56,7 +86,6 @@ function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
-   
   );
 }
 export default App;

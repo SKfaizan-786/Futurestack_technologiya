@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface NaturalLanguageInputProps {
   onSubmit: (text: string) => Promise<void>;
@@ -12,80 +11,124 @@ const exampleInputs = [
   "Stage 4 breast cancer patient, triple negative, age 45, completed radiation therapy 3 months ago",
 ];
 
+type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string };
+
 export function NaturalLanguageInput({ onSubmit, isProcessing }: NaturalLanguageInputProps) {
   const [text, setText] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const addMessage = useCallback((m: Message) => {
+    setMessages((prev) => [...prev, m]);
+  }, []);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!text.trim()) return;
-    await onSubmit(text);
+
+    const userMsg: Message = { id: String(Date.now()), role: 'user', text: text.trim() };
+    addMessage(userMsg);
+    setText('');
+
+    try {
+      const placeholder: Message = { id: `assistant-${Date.now()}`, role: 'assistant', text: isProcessing ? 'Processing...' : '' };
+      addMessage(placeholder);
+
+      await onSubmit(userMsg.text);
+
+      setMessages((prev) => prev.map((m) => (m.id === placeholder.id ? { ...m, text: 'Search completed — showing results.' } : m)));
+    } catch (err: any) {
+      setMessages((prev) => prev.map((m) => (m.role === 'assistant' && m.text === 'Processing...' ? { ...m, text: 'Failed to process. Please try again.' } : m)));
+      console.error(err);
+      alert(err?.message || 'Failed to find matching trials.');
+    }
+  };
+
+  const handleExample = (example: string) => {
+    setText(example);
   };
 
   return (
-    <div className="w-full max-w-4xl">
-      <div className="mb-6">
-        <div className="flex items-center mb-2">
-          <Sparkles className="w-5 h-5 text-primary-blue mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Describe the Patient</h3>
-        </div>
-        <p className="text-sm text-gray-600">
-          Tell us about the patient's condition in your own words. Our AI will understand and find matching trials.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="patient-description" className="sr-only">
-            Patient description
-          </label>
-          <textarea
-            id="patient-description"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Example: 65 year old female with stage 3 lung cancer, EGFR positive, previously treated with chemotherapy..."
-            rows={6}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent resize-none"
-            aria-describedby="example-inputs"
-            disabled={isProcessing}
-          />
+    <div className="w-full">
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div ref={listRef} className="h-48 overflow-y-auto p-4 bg-gray-50">
+          {messages.length === 0 && (
+            <div className="text-sm text-gray-500">No messages yet — start by typing a patient description.</div>
+          )}
+          {messages.map((m) => (
+            <div key={m.id} className={`max-w-3/4 ${m.role === 'user' ? 'ml-auto text-right' : 'mr-auto text-left'}`}>
+              <div
+                className={`inline-block px-4 py-2 rounded-lg text-sm ${
+                  m.role === 'user' ? 'bg-[#1e68d1] text-white' : 'bg-white border border-gray-200 text-gray-800'
+                }`}
+              >
+                {m.text}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div id="example-inputs" className="bg-gray-50 rounded-lg p-4">
-          <p className="text-xs font-medium text-gray-700 mb-2">Example inputs:</p>
-          <ul className="space-y-2">
-            {exampleInputs.map((example, index) => (
-              <li key={index}>
+        <div className="p-4 border-t border-gray-100">
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="e.g., 65 year old female with stage 3 lung cancer, EGFR positive..."
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e68d1] focus:border-transparent resize-none"
+              disabled={isProcessing}
+            />
+
+            <div className="flex flex-col gap-2">
+              {exampleInputs.map((ex, i) => (
                 <button
+                  key={i}
                   type="button"
-                  onClick={() => setText(example)}
-                  className="text-xs text-primary-blue hover:text-blue-600 hover:underline text-left"
+                  onClick={() => handleExample(ex)}
+                  className="text-left text-xs px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 w-full truncate"
                   disabled={isProcessing}
                 >
-                  "{example}"
+                  {ex}
                 </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+              ))}
+            </div>
 
-        <button
-          type="submit"
-          disabled={!text.trim() || isProcessing}
-          className="w-full py-3 px-6 bg-primary-blue text-white font-medium rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isProcessing ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </span>
-          ) : (
-            'Find Matching Trials'
-          )}
-        </button>
-      </form>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setText('')}
+                className="px-3 py-2 rounded-md text-sm text-gray-700 border border-gray-300 hover:bg-gray-100 hover:shadow-sm transition"
+                disabled={isProcessing}
+              >
+                Clear
+              </button>
+              <button
+                type="submit"
+                disabled={!text.trim() || isProcessing}
+                className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-br from-[#1e68d1] to-[#0b4fa1] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Finding...
+                  </>
+                ) : (
+                  'Find My Matching Trials'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
